@@ -1,29 +1,15 @@
-# README #
+# ![Image](https://www.knime.com/files/knime_logo_github_40x40_4layers.png) KNIME® basic credentials ports and nodes
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This repository contains TODO
 
-### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+## Development Notes
 
-### How do I get set up? ###
+You can find instructions on how to work with our code or develop extensions for
+KNIME Analytics Platform in the _knime-sdk-setup_ repository
+on [BitBucket](https://bitbucket.org/KNIME/knime-sdk-setup)
+or [GitHub](http://github.com/knime/knime-sdk-setup).
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+## Join the Community!
 
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+* [KNIME Forum](https://forum.knime.com/)
