@@ -59,13 +59,13 @@ public final class CredentialType {
 
     private final String m_name;
 
-    private final Class<?> m_credentialClass;
+    private final Class<? extends Credential> m_credentialClass;
 
     private final CredentialSerializer<?> m_credentialSerializer;
 
     CredentialType(final String id, //
             final String name, //
-            final Class<?> credentialClass, //
+            final Class<? extends Credential> credentialClass, //
             final CredentialSerializer<?> credentialSerializer) {
         m_id = id;
         m_name = name;

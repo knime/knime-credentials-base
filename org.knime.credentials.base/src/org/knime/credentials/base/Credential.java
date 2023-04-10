@@ -44,70 +44,25 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-03-29 (Alexander Bondaletov, Redfield SE): created
+ *   2023-04-01 (Alexander Bondaletov, Redfield SE): created
  */
 package org.knime.credentials.base;
 
-import java.lang.reflect.Modifier;
-
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.config.ConfigRO;
-import org.knime.core.node.config.ConfigWO;
-
 /**
- * Interface describing credential serializer used to save and load credential
- * objects.
+ * The interface intended to be implemented by classes representing a credential
+ * of a particular {@link CredentialType}.
  *
  * @author Alexander Bondaletov, Redfield SE
- * @param <T>
- *            The credential class.
  */
-public interface CredentialSerializer<T extends Credential> {
+public interface Credential {
 
     /**
-     * Stores the credential into the given config object.
-     *
-     * @param credential
-     *            The credential to save.
-     * @param config
-     *            The config to save into.
+     * @return The credential type.
      */
-    void save(T credential, ConfigWO config);
+    CredentialType getType();
 
     /**
-     * Loads the credential from the given config.
-     *
-     * @param config
-     *            The config to load credential from.
-     * @return Loaded credential object.
+     * @return The key/value pairs describing the credentials.
      */
-    T load(ConfigRO config);
-
-    /**
-     * Returns the credential class that this serializer reads and writes. The class
-     * is determined from the generic argument.
-     *
-     * @return a credential object class
-     */
-    @SuppressWarnings("unchecked")
-    default Class<T> getCredentialClass() {
-        try {
-            Class<T> c = (Class<T>) getClass()
-                    .getMethod("load", ConfigRO.class)
-                    .getGenericReturnType();
-            if (!Credential.class.isAssignableFrom(c) || ((c.getModifiers() & Modifier.ABSTRACT) != 0)) {
-                NodeLogger.getLogger(getClass())
-                        .coding(getClass().getName()
-                                + " does not use generics properly, the type of the created credential " + "is '"
-                                + c.getName() + "'. Please fix your implementation by specifying a "
-                                + "non-abstract type in the extended CredentialSerializer class.");
-                return null;
-            } else {
-                return c;
-            }
-        } catch (NoSuchMethodException ex) {
-            // this is not possible
-            throw new AssertionError("Someone removed the 'load' method from this class");
-        }
-    }
+    String[][] describe();
 }

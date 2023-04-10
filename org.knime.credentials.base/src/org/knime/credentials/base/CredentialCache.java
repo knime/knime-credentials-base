@@ -44,70 +44,65 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-03-29 (Alexander Bondaletov, Redfield SE): created
+ *   2023-04-10 (Alexander Bondaletov, Redfield SE): created
  */
 package org.knime.credentials.base;
 
-import java.lang.reflect.Modifier;
-
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.config.ConfigRO;
-import org.knime.core.node.config.ConfigWO;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Interface describing credential serializer used to save and load credential
- * objects.
+ * In-memory credential cache.
  *
  * @author Alexander Bondaletov, Redfield SE
- * @param <T>
- *            The credential class.
  */
-public interface CredentialSerializer<T extends Credential> {
+public final class CredentialCache {
+
+    private final Map<UUID, Credential> m_credentials;
+
+    private static final CredentialCache INSTANCE = new CredentialCache();
+
+    private CredentialCache() {
+        m_credentials = new HashMap<>();
+    }
 
     /**
-     * Stores the credential into the given config object.
+     * Stores given credential in the cache.
      *
      * @param credential
-     *            The credential to save.
-     * @param config
-     *            The config to save into.
+     *            The credential object.
+     * @return The cacheId that could be used to retrieve or delete the credential
+     *         from the cache.
      */
-    void save(T credential, ConfigWO config);
+    public static synchronized UUID store(final Credential credential) {
+        final var uuid = UUID.randomUUID();
+        INSTANCE.m_credentials.put(uuid, credential);
+        return uuid;
+    }
 
     /**
-     * Loads the credential from the given config.
-     *
-     * @param config
-     *            The config to load credential from.
-     * @return Loaded credential object.
-     */
-    T load(ConfigRO config);
-
-    /**
-     * Returns the credential class that this serializer reads and writes. The class
-     * is determined from the generic argument.
-     *
-     * @return a credential object class
+     * @param <T>
+     *            The credential class.
+     * @param cacheId
+     *            The cache id.
+     * @return an optional with the credential corresponding to a given id, or an
+     *         empty one, if no credential is currently cached under the given
+     *         {@link UUID}.
      */
     @SuppressWarnings("unchecked")
-    default Class<T> getCredentialClass() {
-        try {
-            Class<T> c = (Class<T>) getClass()
-                    .getMethod("load", ConfigRO.class)
-                    .getGenericReturnType();
-            if (!Credential.class.isAssignableFrom(c) || ((c.getModifiers() & Modifier.ABSTRACT) != 0)) {
-                NodeLogger.getLogger(getClass())
-                        .coding(getClass().getName()
-                                + " does not use generics properly, the type of the created credential " + "is '"
-                                + c.getName() + "'. Please fix your implementation by specifying a "
-                                + "non-abstract type in the extended CredentialSerializer class.");
-                return null;
-            } else {
-                return c;
-            }
-        } catch (NoSuchMethodException ex) {
-            // this is not possible
-            throw new AssertionError("Someone removed the 'load' method from this class");
-        }
+    public static synchronized <T extends Credential> Optional<T> get(final UUID cacheId) {
+        return Optional.ofNullable((T) INSTANCE.m_credentials.get(cacheId));
+    }
+
+    /**
+     * Deletes the credential stored under the give id from cache.
+     *
+     * @param cacheId
+     *            The cache id.
+     */
+    public static synchronized void delete(final UUID cacheId) {
+        INSTANCE.m_credentials.remove(cacheId);
     }
 }

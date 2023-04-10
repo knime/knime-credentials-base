@@ -92,7 +92,7 @@ public final class CredentialTypeRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void addCredentialType(final IConfigurationElement e) {
+    private <T extends Credential> void addCredentialType(final IConfigurationElement e) {
 
         final var declaringExt = e.getDeclaringExtension().getUniqueIdentifier();
         final var id = e.getAttribute("id");

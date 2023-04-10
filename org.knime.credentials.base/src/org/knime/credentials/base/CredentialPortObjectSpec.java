@@ -44,70 +44,87 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-03-29 (Alexander Bondaletov, Redfield SE): created
+ *   2023-04-03 (Alexander Bondaletov, Redfield SE): created
  */
 package org.knime.credentials.base;
 
-import java.lang.reflect.Modifier;
+import java.util.Objects;
 
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.config.ConfigRO;
-import org.knime.core.node.config.ConfigWO;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.port.AbstractSimplePortObjectSpec;
 
 /**
- * Interface describing credential serializer used to save and load credential
- * objects.
+ * Specification for the {@link CredentialPortObject}.
  *
  * @author Alexander Bondaletov, Redfield SE
- * @param <T>
- *            The credential class.
  */
-public interface CredentialSerializer<T extends Credential> {
+public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
+    /**
+     * Serializer class.
+     */
+    public static final class Serializer extends AbstractSimplePortObjectSpecSerializer<CredentialPortObjectSpec> {
+    }
+
+    private static final String KEY_TYPE = "type";
+
+    private CredentialType m_credentialType;
 
     /**
-     * Stores the credential into the given config object.
-     *
-     * @param credential
-     *            The credential to save.
-     * @param config
-     *            The config to save into.
+     * Creates new instance.
      */
-    void save(T credential, ConfigWO config);
+    public CredentialPortObjectSpec() {
+        this(null);
+    }
 
     /**
-     * Loads the credential from the given config.
+     * @param credentialType
+     *            The credential type.
      *
-     * @param config
-     *            The config to load credential from.
-     * @return Loaded credential object.
      */
-    T load(ConfigRO config);
+    public CredentialPortObjectSpec(final CredentialType credentialType) {
+        m_credentialType = credentialType;
+    }
 
     /**
-     * Returns the credential class that this serializer reads and writes. The class
-     * is determined from the generic argument.
-     *
-     * @return a credential object class
+     * @return the credentialType of the credentials the port object provides access
+     *         to.
      */
-    @SuppressWarnings("unchecked")
-    default Class<T> getCredentialClass() {
-        try {
-            Class<T> c = (Class<T>) getClass()
-                    .getMethod("load", ConfigRO.class)
-                    .getGenericReturnType();
-            if (!Credential.class.isAssignableFrom(c) || ((c.getModifiers() & Modifier.ABSTRACT) != 0)) {
-                NodeLogger.getLogger(getClass())
-                        .coding(getClass().getName()
-                                + " does not use generics properly, the type of the created credential " + "is '"
-                                + c.getName() + "'. Please fix your implementation by specifying a "
-                                + "non-abstract type in the extended CredentialSerializer class.");
-                return null;
-            } else {
-                return c;
-            }
-        } catch (NoSuchMethodException ex) {
-            // this is not possible
-            throw new AssertionError("Someone removed the 'load' method from this class");
+    public CredentialType getCredentialType() {
+        return m_credentialType;
+    }
+
+    @Override
+    protected void save(final ModelContentWO model) {
+        model.addString(KEY_TYPE, m_credentialType.getId());
+    }
+
+    @Override
+    protected void load(final ModelContentRO model) throws InvalidSettingsException {
+        m_credentialType = CredentialTypeRegistry.getCredentialType(model.getString(KEY_TYPE));
+    }
+
+    @Override
+    public boolean equals(final Object ospec) {
+        if (ospec == null) {
+            return false;
         }
+
+        if (this == ospec) {
+            return true;
+        }
+
+        if (ospec.getClass() != getClass()) {
+            return false;
+        }
+
+        final var spec = (CredentialPortObjectSpec) ospec;
+        return Objects.equals(m_credentialType, spec.m_credentialType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(m_credentialType);
     }
 }

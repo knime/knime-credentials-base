@@ -2,4 +2,15 @@
 <?eclipse version="3.0"?>
 <plugin>
    <extension-point id="CredentialType" name="CredentialType" schema="schema/CredentialType.exsd"/>
+   <extension
+         point="org.knime.core.PortType">
+      <portType
+            hidden="false"
+            name="org.knime.credentials.base.CredentialPortObject"
+            objectClass="org.knime.credentials.base.CredentialPortObject"
+            objectSerializer="org.knime.credentials.base.CredentialPortObject$Serializer"
+            specClass="org.knime.credentials.base.CredentialPortObjectSpec"
+            specSerializer="org.knime.credentials.base.CredentialPortObjectSpec$Serializer">
+      </portType>
+   </extension>
 </plugin>

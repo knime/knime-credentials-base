@@ -44,70 +44,62 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-03-29 (Alexander Bondaletov, Redfield SE): created
+ *   2023-04-11 (Alexander Bondaletov, Redfield SE): created
  */
 package org.knime.credentials.base;
 
-import java.lang.reflect.Modifier;
+import java.util.Optional;
 
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.config.ConfigRO;
-import org.knime.core.node.config.ConfigWO;
+import org.knime.core.webui.data.InitialDataService;
+import org.knime.core.webui.data.RpcDataService;
+import org.knime.core.webui.node.port.PortView;
+import org.knime.core.webui.node.port.PortViewFactory;
+import org.knime.core.webui.page.Page;
 
 /**
- * Interface describing credential serializer used to save and load credential
- * objects.
+ * {@link PortViewFactory} for the {@link CredentialPortObject}.
  *
  * @author Alexander Bondaletov, Redfield SE
- * @param <T>
- *            The credential class.
  */
-public interface CredentialSerializer<T extends Credential> {
+@SuppressWarnings("restriction")
+public class CredentialPortViewFactory implements PortViewFactory<CredentialPortObject> {
 
-    /**
-     * Stores the credential into the given config object.
-     *
-     * @param credential
-     *            The credential to save.
-     * @param config
-     *            The config to save into.
-     */
-    void save(T credential, ConfigWO config);
-
-    /**
-     * Loads the credential from the given config.
-     *
-     * @param config
-     *            The config to load credential from.
-     * @return Loaded credential object.
-     */
-    T load(ConfigRO config);
-
-    /**
-     * Returns the credential class that this serializer reads and writes. The class
-     * is determined from the generic argument.
-     *
-     * @return a credential object class
-     */
-    @SuppressWarnings("unchecked")
-    default Class<T> getCredentialClass() {
-        try {
-            Class<T> c = (Class<T>) getClass()
-                    .getMethod("load", ConfigRO.class)
-                    .getGenericReturnType();
-            if (!Credential.class.isAssignableFrom(c) || ((c.getModifiers() & Modifier.ABSTRACT) != 0)) {
-                NodeLogger.getLogger(getClass())
-                        .coding(getClass().getName()
-                                + " does not use generics properly, the type of the created credential " + "is '"
-                                + c.getName() + "'. Please fix your implementation by specifying a "
-                                + "non-abstract type in the extended CredentialSerializer class.");
-                return null;
-            } else {
-                return c;
+    @Override
+    public PortView createPortView(final CredentialPortObject portObject) {
+        return new PortView() {
+            @Override
+            public Page getPage() {
+                return Page.builder(() -> createHtmlContent(portObject), "index.html").build();
             }
-        } catch (NoSuchMethodException ex) {
-            // this is not possible
-            throw new AssertionError("Someone removed the 'load' method from this class");
-        }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Optional<InitialDataService<?>> createInitialDataService() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<RpcDataService> createRpcDataService() {
+                return Optional.empty();
+            }
+        };
+    }
+
+    private static String createHtmlContent(final CredentialPortObject portObject) {
+        final var sb = new StringBuilder();
+        sb.append("<html><table>");
+
+        portObject.getCredential(Credential.class).ifPresent(cred -> {
+            for (String[] kv : cred.describe()) {
+                sb.append("<tr><td>") //
+                        .append(kv[0]) //
+                        .append("</td><td>") //
+                        .append(kv[1]) //
+                        .append("</td></tr>");
+            }
+        });
+
+        sb.append("</table></html>");
+        return sb.toString();
     }
 }
