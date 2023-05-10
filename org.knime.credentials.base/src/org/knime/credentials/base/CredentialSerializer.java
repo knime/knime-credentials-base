@@ -49,10 +49,15 @@
 package org.knime.credentials.base;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Optional;
 
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.config.ConfigRO;
 import org.knime.core.node.config.ConfigWO;
+import org.knime.core.node.util.ConvenienceMethods;
 
 /**
  * Interface describing credential serializer used to save and load credential
@@ -80,8 +85,9 @@ public interface CredentialSerializer<T extends Credential> {
      * @param config
      *            The config to load credential from.
      * @return Loaded credential object.
+     * @throws InvalidSettingsException
      */
-    T load(ConfigRO config);
+    T load(ConfigRO config) throws InvalidSettingsException;
 
     /**
      * Returns the credential class that this serializer reads and writes. The class
@@ -89,12 +95,55 @@ public interface CredentialSerializer<T extends Credential> {
      *
      * @return a credential object class
      */
-    @SuppressWarnings("unchecked")
     default Class<T> getCredentialClass() {
+        return getClassParameterFromInterfaces() //
+                .or(this::getClassParameterFromSuperclasses) //
+                .orElseGet(this::getClassParameterFromLoadMethod);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Optional<Class<T>> getClassParameterFromInterfaces() {
+        for (Type type : ConvenienceMethods.getAllGenericInterfaces(getClass())) {
+            if (!(type instanceof ParameterizedType)) {
+                continue;
+            }
+
+            var rawType = ((ParameterizedType) type).getRawType();
+            var typeArgument = ((ParameterizedType) type).getActualTypeArguments()[0];
+            if (CredentialSerializer.class == rawType) {
+                if (typeArgument instanceof Class) {
+                    return Optional.of((Class<T>) typeArgument);
+                } else if (typeArgument instanceof ParameterizedType) { // e.g. ImgPlusCell<T>
+                    return Optional.of((Class<T>) ((ParameterizedType) typeArgument).getRawType());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Optional<Class<T>> getClassParameterFromSuperclasses() {
+        for (Type type : ConvenienceMethods.getAllGenericSuperclasses(getClass())) {
+            if (!(type instanceof ParameterizedType)) {
+                continue;
+            }
+
+            var typeArgument = ((ParameterizedType) type).getActualTypeArguments()[0];
+            if (Credential.class.isAssignableFrom((Class<?>) typeArgument)) {
+                if (typeArgument instanceof Class) {
+                    return Optional.of((Class<T>) typeArgument);
+                } else if (typeArgument instanceof ParameterizedType) {
+                    return Optional.of((Class<T>) ((ParameterizedType) typeArgument).getRawType());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Class<T> getClassParameterFromLoadMethod() {
         try {
-            Class<T> c = (Class<T>) getClass()
-                    .getMethod("load", ConfigRO.class)
-                    .getGenericReturnType();
+            Class<T> c = (Class<T>) getClass().getMethod("load", ConfigRO.class).getGenericReturnType();
             if (!Credential.class.isAssignableFrom(c) || ((c.getModifiers() & Modifier.ABSTRACT) != 0)) {
                 NodeLogger.getLogger(getClass())
                         .coding(getClass().getName()

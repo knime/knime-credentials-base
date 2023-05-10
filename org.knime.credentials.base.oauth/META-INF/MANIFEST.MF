@@ -1,17 +1,17 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: KNIME common authentication/credentials node API.
-Bundle-SymbolicName: org.knime.credentials.base; singleton:=true
+Bundle-Name: KNIME OAuth credentials type implementaion.
+Bundle-SymbolicName: org.knime.credentials.base.oauth;singleton:=true
 Bundle-Version: 5.1.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.knime.workbench.repository;bundle-version="[5.1.0,6.0.0)",
  org.knime.core;bundle-version="[5.1.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.1.0,6.0.0)",
- org.eclipse.ui.workbench
+ org.eclipse.ui.workbench,
+ org.knime.credentials.base;bundle-version="[5.1.0,6.0.0)",
+ com.nimbusds.nimbus-jose-jwt;bundle-version="[8.20.0,9.0.0)"
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: org.knime.credentials.base.CredentialsPlugin
 Bundle-ClassPath: .
-Automatic-Module-Name: org.knime.credentials.base
-Export-Package: org.knime.credentials.base
+Automatic-Module-Name: org.knime.credentials.base.oauth
 

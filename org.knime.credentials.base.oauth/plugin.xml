@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+   <extension
+         point="org.knime.credentials.base.CredentialType">
+      <credentialType
+            credentialClass="org.knime.credentials.base.oauth.api.JWTCredential"
+            credentialSerializerClass="org.knime.credentials.base.oauth.api.JWTCredential$Serializer"
+            id="org.knime.credentials.base.oauth.api.JWTCredential"
+            name="JWT Credential">
+      </credentialType>
+   </extension>
+</plugin>
