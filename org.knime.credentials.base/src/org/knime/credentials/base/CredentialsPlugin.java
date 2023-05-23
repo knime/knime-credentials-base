@@ -1,5 +1,9 @@
 package org.knime.credentials.base;
+
+import java.util.List;
+
 import org.knime.core.webui.node.port.PortViewManager;
+import org.knime.core.webui.node.port.PortViewManager.PortViewDescriptor;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -62,7 +66,12 @@ public class CredentialsPlugin implements BundleActivator {
 
     @Override
     public void start(final BundleContext context) throws Exception {
-        PortViewManager.registerPortViewFactory(CredentialPortObject.TYPE, new CredentialPortViewFactory());
+        final var portViewFactory = new CredentialPortViewFactory();
+
+        PortViewManager.registerPortViews(CredentialPortObject.TYPE, //
+                List.of(new PortViewDescriptor("Credential", portViewFactory)), //
+                List.of(0), //
+                List.of(0));
     }
 
     @Override

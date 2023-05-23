@@ -52,6 +52,7 @@ import java.util.Optional;
 
 import org.knime.core.webui.data.InitialDataService;
 import org.knime.core.webui.data.RpcDataService;
+import org.knime.core.webui.node.port.PortSpecViewFactory;
 import org.knime.core.webui.node.port.PortView;
 import org.knime.core.webui.node.port.PortViewFactory;
 import org.knime.core.webui.page.Page;
@@ -62,7 +63,8 @@ import org.knime.core.webui.page.Page;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class CredentialPortViewFactory implements PortViewFactory<CredentialPortObject> {
+public class CredentialPortViewFactory
+        implements PortViewFactory<CredentialPortObject>, PortSpecViewFactory<CredentialPortObjectSpec> {
 
     @Override
     public PortView createPortView(final CredentialPortObject portObject) {
@@ -70,6 +72,27 @@ public class CredentialPortViewFactory implements PortViewFactory<CredentialPort
             @Override
             public Page getPage() {
                 return Page.builder(() -> createHtmlContent(portObject), "index.html").build();
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Optional<InitialDataService<?>> createInitialDataService() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<RpcDataService> createRpcDataService() {
+                return Optional.empty();
+            }
+        };
+    }
+
+    @Override
+    public PortView createPortView(final CredentialPortObjectSpec portObjectSpec) {
+        return new PortView() {
+            @Override
+            public Page getPage() {
+                return Page.builder(() -> "<html>Nothing to display</html>", "index.html").build();
             }
 
             @SuppressWarnings("unchecked")
