@@ -10,4 +10,13 @@
             name="JWT Credential">
       </credentialType>
    </extension>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/io/connectors"
+            deprecated="false"
+            factory-class="org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorNodeFactory"
+            hidden="false">
+      </node>
+   </extension>
 </plugin>
