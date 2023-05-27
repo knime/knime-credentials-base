@@ -13,4 +13,13 @@
             specSerializer="org.knime.credentials.base.CredentialPortObjectSpec$Serializer">
       </portType>
    </extension>
+   <extension
+         point="org.knime.credentials.base.CredentialType">
+      <credentialType
+            credentialClass="org.knime.credentials.base.UsernamePasswordCredential"
+            credentialSerializerClass="org.knime.credentials.base.UsernamePasswordCredential$Serializer"
+            id="org.knime.credentials.base.UsernamePasswordCredential"
+            name="Username and password credential">
+      </credentialType>
+   </extension>
 </plugin>
