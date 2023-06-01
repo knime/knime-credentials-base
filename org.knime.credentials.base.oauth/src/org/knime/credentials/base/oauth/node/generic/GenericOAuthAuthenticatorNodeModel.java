@@ -59,6 +59,7 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeModel;
+import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
@@ -69,6 +70,7 @@ import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSe
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ServiceType;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.builder.api.DefaultApi20;
 
 /**
  * Generic OAuth authentication node. Performs OAuth authentication using
@@ -110,6 +112,16 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
             }
         }
 
+        if (settings.m_serviceType == ServiceType.STANDARD) {
+            if (settings.m_standardService == null) {
+                throw new InvalidSettingsException("No service is selected");
+            }
+
+            if (!settings.m_standardService.isApi20() && settings.m_grantType != GrantType.AUTH_CODE) {
+                throw new InvalidSettingsException("Only Auth code grant type is supported by OAuth 1.0");
+            }
+        }
+
         if (StringUtils.isEmpty(settings.m_clientId)) {
             throw new InvalidSettingsException("Client/App ID is required");
         }
@@ -131,15 +143,45 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
         return new PortObject[] { new CredentialPortObject(createSpec(), uuid) };
     }
 
-    private static JWTCredential fetchCredential(final GenericOAuthAuthenticatorSettings settings)
+    private static Credential fetchCredential(final GenericOAuthAuthenticatorSettings settings)
             throws IOException, InterruptedException, ExecutionException, ParseException {
+
         var builder = new ServiceBuilder(settings.m_clientId);
 
         if (settings.m_clientType == ClientType.CONFIDENTIAL) {
             builder.apiSecret(settings.m_clientSecret);
         }
 
-        var api = new CustomApi20(settings.m_tokenUrl, settings.m_authorizationUrl);
+        if (settings.m_serviceType == ServiceType.CUSTOM || settings.m_standardService.isApi20()) {
+            return fetchCredentialOAuth20(settings, builder);
+        } else {
+            return fetchCredentialOAuth1(settings, builder);
+        }
+
+
+    }
+
+    private static Credential fetchCredentialOAuth1(final GenericOAuthAuthenticatorSettings settings,
+            final ServiceBuilder builder) throws IOException {
+
+        final var api = settings.m_standardService.getApi10();
+        try (var service = builder.build(api)) {
+            // TODO
+        }
+        return null;
+    }
+
+    private static Credential fetchCredentialOAuth20(final GenericOAuthAuthenticatorSettings settings,
+            final ServiceBuilder builder) throws IOException, InterruptedException, ExecutionException, ParseException {
+
+        final DefaultApi20 api;
+
+        if (settings.m_serviceType == ServiceType.CUSTOM) {
+            api = new CustomApi20(settings.m_tokenUrl, settings.m_authorizationUrl);
+        } else {
+            api = settings.m_standardService.getApi20();
+        }
+
         try (var service = builder.build(api)) {
             var token = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
             return new GenericJWTCredential(token.getAccessToken(), null, token.getRefreshToken());
