@@ -104,7 +104,7 @@ public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
     }
 
     enum HttpRequestMethod {
-        POST, PUT;
+        POST, GET;
     }
 
     enum ClientAuthenticationType {
