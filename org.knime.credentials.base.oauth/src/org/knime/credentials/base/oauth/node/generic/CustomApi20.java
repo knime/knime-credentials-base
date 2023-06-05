@@ -48,7 +48,13 @@
  */
 package org.knime.credentials.base.oauth.node.generic;
 
+import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ClientAuthenticationType;
+
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
+import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
+import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
  * {@link DefaultApi20} implementation that holds custom token and authorization
@@ -60,17 +66,26 @@ public class CustomApi20 extends DefaultApi20 {
 
     private final String m_tokenUrl;
     private final String m_authorizationUrl;
+    private final Verb m_requestMethod;
+    private final ClientAuthenticationType m_clientAuthentication;
 
     /**
      * @param tokenUrl
      *            Access token endpoint URL.
      * @param authorizationUrl
      *            Authorization endpoint URL.
+     * @param requestMethod
+     *            Authorization request method.
+     * @param clientAuthentication
+     *            Client authentication type.
      *
      */
-    public CustomApi20(final String tokenUrl, final String authorizationUrl) {
+    public CustomApi20(final String tokenUrl, final String authorizationUrl, final Verb requestMethod,
+            final ClientAuthenticationType clientAuthentication) {
         m_tokenUrl = tokenUrl;
         m_authorizationUrl = authorizationUrl;
+        m_requestMethod = requestMethod;
+        m_clientAuthentication = clientAuthentication;
     }
 
     @Override
@@ -83,4 +98,17 @@ public class CustomApi20 extends DefaultApi20 {
         return m_authorizationUrl;
     }
 
+    @Override
+    public Verb getAccessTokenVerb() {
+        return m_requestMethod;
+    }
+
+    @Override
+    public ClientAuthentication getClientAuthentication() {
+        if (m_clientAuthentication == ClientAuthenticationType.HTTP_BASIC_AUTH) {
+            return HttpBasicAuthenticationScheme.instance();
+        } else {
+            return RequestBodyAuthenticationScheme.instance();
+        }
+    }
 }

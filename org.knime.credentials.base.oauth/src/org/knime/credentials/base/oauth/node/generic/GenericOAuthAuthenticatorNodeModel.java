@@ -67,10 +67,14 @@ import org.knime.credentials.base.oauth.api.GenericJWTCredential;
 import org.knime.credentials.base.oauth.api.JWTCredential;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ClientType;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.GrantType;
+import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.HttpRequestMethod;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ServiceType;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
  * Generic OAuth authentication node. Performs OAuth authentication using
@@ -130,7 +134,17 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
             throw new InvalidSettingsException("Client/App secret is required");
         }
 
-        if (settings.m_grantType != GrantType.CLIENT_CREDENTIALS) {
+        if (settings.m_grantType == GrantType.PASSWORD) {
+            if (StringUtils.isEmpty(settings.m_pwdGrantUsername)) {
+                throw new InvalidSettingsException("Username is required");
+            }
+
+            if (StringUtils.isEmpty(settings.m_pwdGrantPassword)) {
+                throw new InvalidSettingsException("Password is required");
+            }
+        }
+
+        if (settings.m_grantType != GrantType.CLIENT_CREDENTIALS && settings.m_grantType != GrantType.PASSWORD) {
             throw new InvalidSettingsException("Grant type is not implemented yet");
         }
     }
@@ -177,14 +191,34 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
         final DefaultApi20 api;
 
         if (settings.m_serviceType == ServiceType.CUSTOM) {
-            api = new CustomApi20(settings.m_tokenUrl, settings.m_authorizationUrl);
+            api = new CustomApi20(settings.m_tokenUrl, //
+                    settings.m_authorizationUrl, //
+                    toScribeVerb(settings.m_customRequestMethod), //
+                    settings.m_clientAuthMechanism);
         } else {
             api = settings.m_standardService.getApi20();
         }
 
         try (var service = builder.build(api)) {
-            var token = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
+            var token = fetchAccessToken(service, settings);
             return new GenericJWTCredential(token.getAccessToken(), null, token.getRefreshToken());
         }
+    }
+
+    private static OAuth2AccessToken fetchAccessToken(final OAuth20Service service,
+            final GenericOAuthAuthenticatorSettings settings)
+            throws IOException, InterruptedException, ExecutionException {
+        switch (settings.m_grantType) {
+        case CLIENT_CREDENTIALS:
+            return service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
+        case PASSWORD:
+            return service.getAccessTokenPasswordGrant(settings.m_pwdGrantUsername, settings.m_pwdGrantPassword, settings.m_scopes);
+        default:
+            throw new IllegalArgumentException("Usupported grant type: " + settings.m_grantType);
+        }
+    }
+
+    private static Verb toScribeVerb(final HttpRequestMethod method) {
+        return Verb.valueOf(method.toString());
     }
 }

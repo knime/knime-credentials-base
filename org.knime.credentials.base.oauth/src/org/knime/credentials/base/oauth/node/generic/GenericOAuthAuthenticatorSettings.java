@@ -59,10 +59,10 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 @SuppressWarnings("restriction")
 public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
 
-    @Widget(title = "Service type", description = "Defines whether the user selects service from the list or enters custom URLs manually.")
+    @Widget(title = "Service type", description = "Whether to connect to a standard OAuth service from a predefined list, or to manually specify service URLs.")
     ServiceType m_serviceType = ServiceType.STANDARD;
 
-    @Widget(title = "Supported standard service", description = "The service to perform authentication to.")
+    @Widget(title = "Service", description = "A standard OAuth service from a predefined list.")
     StandardService m_standardService;
 
     @Widget(title = "Authorization endpoint URL", description = "The authorization endpoint URL of the OAuth service.")
@@ -71,23 +71,44 @@ public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
     @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth service.")
     String m_tokenUrl;
 
-    @Widget(title = "Client type", description = "Whether a public or confidential application flow should be used. A confidential application requires a secret.")
+    @Widget(title = "Token endpoint request method", description = "HTTP method to use when requesting the access token from the token endpoint.")
+    HttpRequestMethod m_customRequestMethod = HttpRequestMethod.POST;
+
+    @Widget(title = "Client/App type", description = "Whether a public or confidential application flow should be used. A confidential application requires a secret.")
     ClientType m_clientType = ClientType.PUBLIC;
 
-    @Widget(title = "Client/App ID", description = "The Client/Application ID. In some services this is called API key.")
+    @Widget(title = "ID", description = "The Client/Application ID. In some services this is called API key.")
     String m_clientId;
 
-    @Widget(title = "Client/App secret", description = "The secret for the confidential application.")
+    @Widget(title = "Secret", description = "The secret for the confidential application.")
     String m_clientSecret;
+
+    @Widget(title = "Authentication mechanism", description = "How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism, "
+            + "but some services expect these values to be part of the form-encoded request body.")
+    ClientAuthenticationType m_clientAuthMechanism = ClientAuthenticationType.HTTP_BASIC_AUTH;
 
     @Widget(title = "Grant type", description = "Desired OAuth Grant type")
     GrantType m_grantType = GrantType.CLIENT_CREDENTIALS;
+
+    @Widget(title = "Username", description = "The username to use")
+    String m_pwdGrantUsername;
+
+    @Widget(title = "Password", description = "The password to use")
+    String m_pwdGrantPassword;
 
     @Widget(title = "Scopes", description = "The list of scopes separated by the whitespace or new line.")
     String m_scopes;
 
     enum ServiceType {
         STANDARD, CUSTOM;
+    }
+
+    enum HttpRequestMethod {
+        POST, PUT;
+    }
+
+    enum ClientAuthenticationType {
+        HTTP_BASIC_AUTH, REQUEST_BODY
     }
 
     enum ClientType {
@@ -97,5 +118,4 @@ public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
     enum GrantType {
         AUTH_CODE, CLIENT_CREDENTIALS, PASSWORD, IMPLICIT;
     }
-
 }
