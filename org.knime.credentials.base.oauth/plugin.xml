@@ -18,5 +18,11 @@
             factory-class="org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorNodeFactory"
             hidden="false">
       </node>
+      <node
+            category-path="/io/connectors"
+            deprecated="false"
+            factory-class="org.knime.credentials.base.oauth2.password.OAuth2AuthenticatorPasswordNodeFactory"
+            hidden="false">
+      </node>
    </extension>
 </plugin>
