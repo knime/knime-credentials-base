@@ -46,47 +46,15 @@
  * History
  *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth2.clientcredentials;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
 
 /**
- * The node factory for the {@link OAuth2AuthenticatorPasswordNodeModel} node.
+ * The node settings for the Generic OAuth Authenticator node.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
-
-    private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant.
-                    </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
-            """;
-
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
-            .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential")//
-            .sinceVersion(5, 1, 0)//
-            .build();
-
-    /**
-     * Creates new instance.
-     */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
-        super(CONFIGURATION);
-    }
-
-    @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
-    }
+public final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettingsBase {
 }

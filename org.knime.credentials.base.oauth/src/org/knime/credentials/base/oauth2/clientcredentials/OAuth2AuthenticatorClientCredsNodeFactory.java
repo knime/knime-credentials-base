@@ -46,34 +46,35 @@
  * History
  *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth2.clientcredentials;
 
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeFactory;
 import org.knime.credentials.base.CredentialPortObject;
 
 /**
- * The node factory for the {@link OAuth2AuthenticatorPasswordNodeModel} node.
+ * The node factory for the {@link OAuth2AuthenticatorClientCredsNodeModel} node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
+public class OAuth2AuthenticatorClientCredsNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorClientCredsNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant.
+                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/client-credentials/">client
+                    credentials</a> grant.
                     </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
+                    <p>The client credentials grant is used to obtain an access token on behalf of an application/client,
+                    without having the context of a user.
+                    </p>
             """;
 
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
+            .name("OAuth2 Authenticator (Client Credentials)")//
             .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
+            .shortDescription("OAuth2 Authenticator that supports the client credentials grant.")//
             .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
+            .modelSettingsClass(OAuth2AuthenticatorClientCredsSettings.class)//
             .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential")//
             .sinceVersion(5, 1, 0)//
             .build();
@@ -81,12 +82,12 @@ public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAu
     /**
      * Creates new instance.
      */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
+    public OAuth2AuthenticatorClientCredsNodeFactory() {
         super(CONFIGURATION);
     }
 
     @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
+    public OAuth2AuthenticatorClientCredsNodeModel createNodeModel() {
+        return new OAuth2AuthenticatorClientCredsNodeModel(CONFIGURATION);
     }
 }
