@@ -44,65 +44,67 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-05 (bjoern): created
+ *   2023-06-06 (bjoern): created
  */
 package org.knime.credentials.base.oauth2.base;
 
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.httpclient.HttpClient;
+import com.github.scribejava.core.httpclient.HttpClientConfig;
+import com.github.scribejava.core.model.OAuthConstants;
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Base class for OAuth2 Authenticator settings. Defines the common settings and
- * enums of all OAuth2 Authenticator settings classes.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author bjoern
  */
-@SuppressWarnings({ "restriction", "javadoc" })
-public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
+class CustomOAuth20Service extends OAuth20Service {
 
-    @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth2 service.")
-    public String m_tokenUrl;
+    private Map<String, String> m_additionalRequestBodyFields = new HashMap<>();
 
-    @Widget(title = "Token endpoint request method", description = "HTTP method to use when requesting the access token from the token endpoint.")
-    public HttpRequestMethod m_tokenRequestMethod = HttpRequestMethod.POST;
+    CustomOAuth20Service(final DefaultApi20 api, //
+            final String apiKey, //
+            final String apiSecret, //
+            final String callback, //
+            final String defaultScope, //
+            final String responseType, //
+            final OutputStream debugStream, //
+            final String userAgent, //
+            final HttpClientConfig httpClientConfig, //
+            final HttpClient httpClient, //
+            final Map<String, String> additionalRequestBodyFields) {
 
-    @Widget(title = "ID", description = "The client/application ID. In some services this is called API key.")
-    public String m_clientId;
-
-    @Widget(title = "Secret", description = "The secret for the confidential application.")
-    public String m_clientSecret;
-
-    @Widget(title = "Authentication mechanism", description = "How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism, "
-            + "but some services expect these values to be part of the form-encoded request body.")
-    public ClientAuthenticationType m_clientAuthMechanism = ClientAuthenticationType.HTTP_BASIC_AUTH;
-
-    @Widget(title = "Scopes", description = "The list of scopes separated by the whitespace or new line.")
-    public String m_scopes;
-
-    public enum HttpRequestMethod {
-        @Label("POST")
-        POST,
-
-        @Label("GET")
-        GET;
+        super(api, apiKey, apiSecret, callback, defaultScope, responseType, debugStream, userAgent, httpClientConfig,
+                httpClient);
+        m_additionalRequestBodyFields = additionalRequestBodyFields;
     }
 
-    public enum ClientAuthenticationType {
-        @Label("HTTP Basic Auth")
-        HTTP_BASIC_AUTH,
+    @Override
+    protected OAuthRequest createAccessTokenClientCredentialsGrantRequest(final String scope) {
 
-        @Label("Request Body")
-        REQUEST_BODY
+        final OAuthRequest request = new OAuthRequest(getApi().getAccessTokenVerb(), //
+                getApi().getAccessTokenEndpoint());
+
+        getApi().getClientAuthentication().addClientAuthentication(request, getApiKey(), getApiSecret());
+
+        if (scope != null) {
+            request.addParameter(OAuthConstants.SCOPE, scope);
+        } else if (getDefaultScope() != null) {
+            request.addParameter(OAuthConstants.SCOPE, getDefaultScope());
+        }
+        request.addParameter(OAuthConstants.GRANT_TYPE, OAuthConstants.CLIENT_CREDENTIALS);
+
+        m_additionalRequestBodyFields.entrySet().stream()
+                .forEach(entry -> request.addParameter(entry.getKey(), entry.getValue()));
+
+        logRequestWithParams("access token client credentials grant", request);
+
+        return request;
     }
 
-    public enum ClientType {
-        PUBLIC, CONFIDENTIAL;
-    }
-
-    public static Verb toScribeVerb(final HttpRequestMethod method) {
-        return Verb.valueOf(method.toString());
-    }
 }

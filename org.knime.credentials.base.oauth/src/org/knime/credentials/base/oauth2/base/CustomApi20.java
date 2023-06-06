@@ -48,11 +48,17 @@
  */
 package org.knime.credentials.base.oauth2.base;
 
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
 
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientAuthenticationType;
 
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.httpclient.HttpClient;
+import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
 import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
 import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
@@ -111,5 +117,25 @@ public class CustomApi20 extends DefaultApi20 {
         } else {
             return RequestBodyAuthenticationScheme.instance();
         }
+    }
+
+    @Override
+    public OAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
+            final String defaultScope, final String responseType, final OutputStream debugStream,
+            final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient) {
+
+        return createService(apiKey, apiSecret, callback, defaultScope, responseType, debugStream, userAgent,
+                httpClientConfig,
+                httpClient, Collections.emptyMap());
+    }
+
+    public OAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
+            final String defaultScope, final String responseType, final OutputStream debugStream,
+            final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient,
+            final Map<String, String> additionalRequestBodyFields) {
+
+        return new CustomOAuth20Service(this, apiKey, apiSecret, callback, defaultScope, responseType, debugStream,
+                userAgent,
+                httpClientConfig, httpClient, additionalRequestBodyFields);
     }
 }
