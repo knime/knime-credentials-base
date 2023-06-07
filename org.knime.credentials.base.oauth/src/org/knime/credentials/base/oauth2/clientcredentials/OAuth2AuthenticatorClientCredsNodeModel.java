@@ -52,6 +52,7 @@ import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -133,6 +134,8 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
 
         var builder = new CustomOAuth2ServiceBuilder(settings.m_clientId);
         builder.apiSecret(settings.m_clientSecret);
+        Arrays.stream(settings.m_additionalRequestFields)//
+                .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
 
         try (var service = builder.build(api)) {
             var scribeJavaToken = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);

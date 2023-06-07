@@ -66,7 +66,9 @@ public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
     @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth2 service.")
     public String m_tokenUrl;
 
-    @Widget(title = "Token endpoint request method", description = "HTTP method to use when requesting the access token from the token endpoint.")
+    @Widget(title = "Token endpoint request method", //
+            description = "HTTP method to use when requesting the access token from the token endpoint.", //
+            advanced = true)
     public HttpRequestMethod m_tokenRequestMethod = HttpRequestMethod.POST;
 
     @Widget(title = "ID", description = "The client/application ID. In some services this is called API key.")
@@ -75,8 +77,12 @@ public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
     @Widget(title = "Secret", description = "The secret for the confidential application.")
     public String m_clientSecret;
 
-    @Widget(title = "Authentication mechanism", description = "How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism, "
-            + "but some services expect these values to be part of the form-encoded request body.")
+    @Widget(title = "Authentication mechanism", //
+            description = """
+                    How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism,
+                    but some services expect these values to be part of the form-encoded request body.
+                        """, //
+            advanced = true)
     public ClientAuthenticationType m_clientAuthMechanism = ClientAuthenticationType.HTTP_BASIC_AUTH;
 
     @Widget(title = "Scopes", description = "The list of scopes separated by the whitespace or new line.")

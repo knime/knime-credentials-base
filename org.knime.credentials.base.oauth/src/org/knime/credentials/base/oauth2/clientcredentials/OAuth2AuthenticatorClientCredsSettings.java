@@ -48,6 +48,8 @@
  */
 package org.knime.credentials.base.oauth2.clientcredentials;
 
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
 
 /**
@@ -56,5 +58,18 @@ import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettingsBase {
+final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettingsBase {
+
+    static final class AdditionalRequestField implements DefaultNodeSettings {
+        @Widget(title = "Field name", description = "Name of the additional request body field.")
+        String m_name;
+
+        @Widget(title = "Field value", description = "Value of the additional request body field.")
+        String m_value;
+    }
+
+    @Widget(title = "Fields", //
+            description = "Allows to add request body fields (key and value) to the token endpoint request.", //
+            advanced = true)
+    AdditionalRequestField[] m_additionalRequestFields = new AdditionalRequestField[0];
 }
