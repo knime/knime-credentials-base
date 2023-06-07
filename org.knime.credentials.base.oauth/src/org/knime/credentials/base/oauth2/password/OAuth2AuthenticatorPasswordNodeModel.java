@@ -65,8 +65,9 @@ import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.oauth.api.GenericJWTCredential;
+import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.credentials.base.oauth2.base.CredentialFactory;
 import org.knime.credentials.base.oauth2.base.CustomApi20;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
 
@@ -94,11 +95,11 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
             final OAuth2AuthenticatorPasswordSettings modelSettings) throws InvalidSettingsException {
         validate(modelSettings);
-        return new PortObjectSpec[] { createSpec() };
+        return new PortObjectSpec[] { createSpec(null) };
     }
 
-    private static CredentialPortObjectSpec createSpec() {
-        return new CredentialPortObjectSpec(JWTCredential.TYPE);
+    private static CredentialPortObjectSpec createSpec(final CredentialType credentialType) {
+        return new CredentialPortObjectSpec(credentialType);
     }
 
     private static void validate(final OAuth2AuthenticatorPasswordSettings settings) throws InvalidSettingsException {
@@ -128,7 +129,7 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
             final OAuth2AuthenticatorPasswordSettings modelSettings) throws Exception {
         var credential = fetchCredential(modelSettings);
         var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(), uuid) };
+        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
     }
 
     private static Credential fetchCredential(final OAuth2AuthenticatorPasswordSettings settings)
@@ -150,7 +151,7 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
                     settings.m_pwdGrantUsername, //
                     settings.m_pwdGrantPassword, //
                     settings.m_scopes);
-            return new GenericJWTCredential(scribeJavaToken.getAccessToken(), null, scribeJavaToken.getRefreshToken());
+            return CredentialFactory.fromScribeToken(scribeJavaToken);
         }
     }
 }

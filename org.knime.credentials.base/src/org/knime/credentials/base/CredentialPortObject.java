@@ -87,10 +87,11 @@ public class CredentialPortObject extends AbstractSimplePortObject {
     private UUID m_cacheId;
 
     /**
-     * Creates new instance.
+     * Public constructor (only for deserialization).
      */
     public CredentialPortObject() {
-        this(null, null);
+        m_spec = null;
+        m_cacheId = null;
     }
 
     /**
@@ -103,6 +104,9 @@ public class CredentialPortObject extends AbstractSimplePortObject {
      *
      */
     public CredentialPortObject(final CredentialPortObjectSpec spec, final UUID cacheId) {
+        if (spec.getCredentialType().isEmpty()) {
+            throw new IllegalArgumentException("Credential type of spec must be known");
+        }
         m_spec = spec;
         m_cacheId = cacheId;
     }
@@ -112,7 +116,7 @@ public class CredentialPortObject extends AbstractSimplePortObject {
      *         to.
      */
     public CredentialType getCredentialType() {
-        return m_spec.getCredentialType();
+        return m_spec.getCredentialType().orElseThrow();
     }
 
     /**
@@ -128,9 +132,7 @@ public class CredentialPortObject extends AbstractSimplePortObject {
 
     @Override
     public String getSummary() {
-        String type = getCredentialType() == null ? "Credential" : getCredentialType().getName();
-
-        return String.format("Credential (%s)", type);
+        return String.format("Credential (%s)", getCredentialType().getName());
     }
 
     @Override

@@ -107,5 +107,4 @@ public class GenericJWTCredential implements JWTCredential {
     public Optional<JWT> getRefreshToken() throws IOException {
         return Optional.ofNullable(m_refreshToken);
     }
-
 }

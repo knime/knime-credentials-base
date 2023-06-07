@@ -49,87 +49,128 @@
 package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.CredentialTypeRegistry;
 import org.knime.credentials.base.NoOpCredentialSerializer;
 
 /**
- * An interface representing JWT {@link Credential} type.
+ * Credential for simple string access token which are not JWTs.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface JWTCredential extends Credential, BearerTokenCredentialValue {
+public final class AccessTokenCredential implements Credential, BearerTokenCredentialValue {
     /**
      *
      * The serializer class
      */
-    public static class Serializer extends NoOpCredentialSerializer<JWTCredential> {
+    public static class Serializer extends NoOpCredentialSerializer<AccessTokenCredential> {
     }
 
     /**
      * Credential type.
      */
-    static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.JWTCredential");
+    static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.AccessTokenCredential");
+
+    private final String m_accessToken;
+
+    private final String m_refreshToken;
+
+    private final Instant m_expiresAfter;
+
+    private final String m_tokenType;
 
     /**
-     * Returns the access token. Access token is refreshed if necessary.
+     * @param accessToken
+     * @param refreshToken
+     * @param expiresAfter
+     * @param tokenType
+     */
+    public AccessTokenCredential(final String accessToken, final String refreshToken, final Instant expiresAfter,
+            final String tokenType) {
+
+        if (StringUtils.isBlank(accessToken)) {
+            throw new IllegalArgumentException("Access token must not be blank");
+        }
+
+        if (StringUtils.isBlank(tokenType)) {
+            throw new IllegalArgumentException("Token type must not be blank");
+        }
+
+        m_accessToken = accessToken;
+        m_refreshToken = refreshToken;
+        m_expiresAfter = expiresAfter;
+        m_tokenType = tokenType;
+    }
+
+    /**
+     * Returns the access token, which is refreshed if necessary (hence the
+     * {@link IOException}).
      *
      * @return The access token.
      * @throws IOException
      *             May be thrown during token refresh.
      */
-    JWT getAccessToken() throws IOException;
+    public String getAccessToken() throws IOException {
+        // TODO: implement refresh
+        return m_accessToken;
+    }
 
     /**
-     * @return The optional holding the id token.
+     * @return the optional refresh token.
      */
-    Optional<JWT> getIdToken();
+    public Optional<String> getRefreshToken() {
+        return Optional.ofNullable(m_refreshToken);
+    }
 
     /**
-     * Returns the refresh token. The access token is refreshed if necessary.
-     *
-     * @return The optional holding the refresh token.
-     * @throws IOException
-     *             May be thrown during token refresh.
+     * @return the optional expiry time of the access token.
      */
-    Optional<JWT> getRefreshToken() throws IOException;
+    public Optional<Instant> getExpiresAfter() {
+        return Optional.ofNullable(m_expiresAfter);
+    }
 
-    @Override
-    default String getBearerToken() throws IOException {
-        return getAccessToken().asString();
+    /**
+     * @return the tokenType
+     */
+    public String getTokenType() {
+        return m_tokenType;
     }
 
     @Override
-    default CredentialType getType() {
+    public String getBearerToken() throws IOException {
+        return getAccessToken();
+    }
+
+    @Override
+    public CredentialType getType() {
         return TYPE;
     }
 
     @Override
-    default String[][] describe() {
+    public String[][] describe() {
         List<String[]> list = new ArrayList<>();
-        try {
-            list.addAll(describe(getAccessToken(), "access-token-"));
-            getIdToken().ifPresent(t -> list.addAll(describe(t, "id-token-")));
-            getRefreshToken().ifPresent(t -> list.addAll(describe(t, "refresh-token-")));
-        } catch (IOException ex) {// NOSONAR error message is attached to description
-            list.add(new String[] { "error", ex.getMessage() });
+        list.add(new String[] { "Access token", obfuscate(m_accessToken) });
+        list.add(new String[] { "Access token type", m_tokenType });
+        if (m_expiresAfter != null) {
+            list.add(new String[] { "Expires after",
+                    m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME) });
+        }
+        if (m_refreshToken != null) {
+            list.add(new String[] { "Refresh token", obfuscate(m_refreshToken) });
         }
         return list.toArray(new String[0][0]);
     }
 
-    private static List<String[]> describe(final JWT token, final String prefix) {
-        List<String[]> list = new ArrayList<>();
-        Map<String, Object> claims = token.getAllClaims();
-        for (Entry<String, Object> e : claims.entrySet()) {
-            list.add(new String[] { prefix + e.getKey(), e.getValue().toString() });
-        }
-        return list;
+    private static String obfuscate(final String toObfuscate) {
+        return toObfuscate.substring(0, 2) + "*".repeat(toObfuscate.length() - 2);
     }
 }

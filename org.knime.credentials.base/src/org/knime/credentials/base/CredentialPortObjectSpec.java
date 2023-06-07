@@ -49,6 +49,7 @@
 package org.knime.credentials.base;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
@@ -80,29 +81,30 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
 
     /**
      * @param credentialType
-     *            The credential type.
-     *
+     *            The credential type. May be null, if currently unknown.
      */
     public CredentialPortObjectSpec(final CredentialType credentialType) {
         m_credentialType = credentialType;
     }
 
     /**
-     * @return the credentialType of the credentials the port object provides access
-     *         to.
+     * @return the optional credentialType of the {@link Credential} the port object
+     *         provides access to, which can be empty if currently unknown.
      */
-    public CredentialType getCredentialType() {
-        return m_credentialType;
+    public Optional<CredentialType> getCredentialType() {
+        return Optional.ofNullable(m_credentialType);
     }
 
     @Override
     protected void save(final ModelContentWO model) {
-        model.addString(KEY_TYPE, m_credentialType.getId());
+        model.addString(KEY_TYPE, getCredentialType().map(CredentialType::getId).orElse(null));
     }
 
     @Override
     protected void load(final ModelContentRO model) throws InvalidSettingsException {
-        m_credentialType = CredentialTypeRegistry.getCredentialType(model.getString(KEY_TYPE));
+        m_credentialType = Optional.ofNullable(model.getString(KEY_TYPE))//
+                .map(CredentialTypeRegistry::getCredentialType)//
+                .orElse(null);
     }
 
     @Override

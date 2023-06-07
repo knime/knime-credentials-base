@@ -66,8 +66,9 @@ import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.oauth.api.GenericJWTCredential;
+import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.credentials.base.oauth2.base.CredentialFactory;
 import org.knime.credentials.base.oauth2.base.CustomApi20;
 import org.knime.credentials.base.oauth2.base.CustomOAuth2ServiceBuilder;
 
@@ -93,11 +94,11 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
             final OAuth2AuthenticatorClientCredsSettings modelSettings) throws InvalidSettingsException {
         validate(modelSettings);
-        return new PortObjectSpec[] { createSpec() };
+        return new PortObjectSpec[] { createSpec(null) };
     }
 
-    private static CredentialPortObjectSpec createSpec() {
-        return new CredentialPortObjectSpec(JWTCredential.TYPE);
+    private static CredentialPortObjectSpec createSpec(final CredentialType credentialType) {
+        return new CredentialPortObjectSpec(credentialType);
     }
 
     private static void validate(final OAuth2AuthenticatorClientCredsSettings settings)
@@ -121,7 +122,7 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
 
         var credential = fetchCredential(modelSettings);
         var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(), uuid) };
+        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
     }
 
     private static Credential fetchCredential(final OAuth2AuthenticatorClientCredsSettings settings)
@@ -139,7 +140,7 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
 
         try (var service = builder.build(api)) {
             var scribeJavaToken = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
-            return new GenericJWTCredential(scribeJavaToken.getAccessToken(), null, scribeJavaToken.getRefreshToken());
+            return CredentialFactory.fromScribeToken(scribeJavaToken);
         }
     }
 }

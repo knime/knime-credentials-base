@@ -44,92 +44,52 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-16 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-07 (bjoern): created
  */
-package org.knime.credentials.base.oauth.api;
+package org.knime.credentials.base.oauth2.base;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.Optional;
 
 import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialType;
-import org.knime.credentials.base.CredentialTypeRegistry;
-import org.knime.credentials.base.NoOpCredentialSerializer;
+import org.knime.credentials.base.oauth.api.AccessTokenCredential;
+import org.knime.credentials.base.oauth.api.GenericJWTCredential;
+
+import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessToken;
 
 /**
- * An interface representing JWT {@link Credential} type.
+ * Factory class to create a {@link Credential} from a scribejava access token.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface JWTCredential extends Credential, BearerTokenCredentialValue {
+public class CredentialFactory {
+
     /**
+     * Creates a new {@link Credential} from the given scribejava access token.
      *
-     * The serializer class
+     * @param scribeToken
+     *            The scribejava access token.
+     * @return a newly created {@link Credential}
      */
-    public static class Serializer extends NoOpCredentialSerializer<JWTCredential> {
-    }
+    public static Credential fromScribeToken(final OAuth2AccessToken scribeToken) {
+        var accessToken = scribeToken.getAccessToken();
+        var idToken = scribeToken instanceof OpenIdOAuth2AccessToken
+                ? ((OpenIdOAuth2AccessToken) scribeToken).getOpenIdToken()
+                : null;
+        var refreshToken = scribeToken.getRefreshToken();
+        var expiresAfter = Optional.ofNullable(scribeToken.getExpiresIn())//
+                .map(secs -> Instant.now().plusSeconds(secs))//
+                .orElse(null);
+        var tokenType = scribeToken.getTokenType();
 
-    /**
-     * Credential type.
-     */
-    static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.JWTCredential");
-
-    /**
-     * Returns the access token. Access token is refreshed if necessary.
-     *
-     * @return The access token.
-     * @throws IOException
-     *             May be thrown during token refresh.
-     */
-    JWT getAccessToken() throws IOException;
-
-    /**
-     * @return The optional holding the id token.
-     */
-    Optional<JWT> getIdToken();
-
-    /**
-     * Returns the refresh token. The access token is refreshed if necessary.
-     *
-     * @return The optional holding the refresh token.
-     * @throws IOException
-     *             May be thrown during token refresh.
-     */
-    Optional<JWT> getRefreshToken() throws IOException;
-
-    @Override
-    default String getBearerToken() throws IOException {
-        return getAccessToken().asString();
-    }
-
-    @Override
-    default CredentialType getType() {
-        return TYPE;
-    }
-
-    @Override
-    default String[][] describe() {
-        List<String[]> list = new ArrayList<>();
         try {
-            list.addAll(describe(getAccessToken(), "access-token-"));
-            getIdToken().ifPresent(t -> list.addAll(describe(t, "id-token-")));
-            getRefreshToken().ifPresent(t -> list.addAll(describe(t, "refresh-token-")));
-        } catch (IOException ex) {// NOSONAR error message is attached to description
-            list.add(new String[] { "error", ex.getMessage() });
+            return new GenericJWTCredential(scribeToken.getAccessToken(), //
+                    idToken, //
+                    refreshToken);
+        } catch (ParseException ignored) {
+            return new AccessTokenCredential(accessToken, refreshToken, expiresAfter, tokenType);
         }
-        return list.toArray(new String[0][0]);
-    }
-
-    private static List<String[]> describe(final JWT token, final String prefix) {
-        List<String[]> list = new ArrayList<>();
-        Map<String, Object> claims = token.getAllClaims();
-        for (Entry<String, Object> e : claims.entrySet()) {
-            list.add(new String[] { prefix + e.getKey(), e.getValue().toString() });
-        }
-        return list;
     }
 }
