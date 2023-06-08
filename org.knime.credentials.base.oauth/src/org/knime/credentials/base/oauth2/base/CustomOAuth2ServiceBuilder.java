@@ -79,6 +79,11 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
     private HttpClient m_httpClient;
     private Map<String, String> m_additionalRequestBodyFields = new HashMap<>();
 
+    /**
+     * Creates a new instance.
+     *
+     * @param apiKey
+     */
     public CustomOAuth2ServiceBuilder(final String apiKey) {
         apiKey(apiKey);
     }
@@ -109,7 +114,15 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
         return this;
     }
 
-    public CustomOAuth2ServiceBuilder setScope(final String scope) {
+    /**
+     * Specifies a certain scope to request. Multiple scopes can be requested by
+     * passing a space-separated list of scopes.
+     *
+     * @param scope
+     *            A space-separated list of scopes.
+     * @return this builder instance.
+     */
+    public CustomOAuth2ServiceBuilder scope(final String scope) {
         Preconditions.checkEmptyString(scope, "Invalid OAuth scope");
         m_scope = scope;
         return this;
@@ -117,16 +130,12 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
 
     @Override
     public CustomOAuth2ServiceBuilder defaultScope(final String defaultScope) {
-        return setScope(defaultScope);
+        return scope(defaultScope);
     }
 
     @Override
     public ServiceBuilderOAuth20 defaultScope(final ScopeBuilder scopeBuilder) {
-        return setScope(scopeBuilder.build());
-    }
-
-    public CustomOAuth2ServiceBuilder withScope(final String scope) {
-        return setScope(scope);
+        return scope(scopeBuilder.build());
     }
 
     @Override
@@ -167,6 +176,16 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
         return debugStream(System.out);
     }
 
+    /**
+     * Adds an additional field to the application/x-www-form-urlencoded request
+     * body. Currently these fields are only used by the client credentials flow.
+     *
+     * @param key
+     *            The name of the field.
+     * @param value
+     *            The value of the field.
+     * @return this builder.
+     */
     public CustomOAuth2ServiceBuilder additionalRequestBodyField(final String key, final String value) {
         m_additionalRequestBodyFields.put(key, value);
         return this;
@@ -185,6 +204,14 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
                 m_httpClient);
     }
 
+    /**
+     * Builds a new {@link OAuth20Service} using the given {@link CustomApi20}
+     * instance.
+     *
+     * @param api
+     *            {@link CustomApi20} instance used to create the service instance.
+     * @return a newly created service instance.
+     */
     public OAuth20Service build(final CustomApi20 api) {
         return api.createService(m_apiKey, //
                 m_apiSecret, //

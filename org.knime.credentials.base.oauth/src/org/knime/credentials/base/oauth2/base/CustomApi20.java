@@ -64,8 +64,8 @@ import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthentic
 import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
- * {@link DefaultApi20} implementation that holds custom token and authorization
- * URLs.
+ * {@link DefaultApi20} implementation that allows to configure several
+ * settings, such as authorization/token URLs.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
@@ -124,18 +124,50 @@ public class CustomApi20 extends DefaultApi20 {
             final String defaultScope, final String responseType, final OutputStream debugStream,
             final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient) {
 
-        return createService(apiKey, apiSecret, callback, defaultScope, responseType, debugStream, userAgent,
-                httpClientConfig,
-                httpClient, Collections.emptyMap());
+        return createService(apiKey, //
+                apiSecret, //
+                callback, //
+                defaultScope, //
+                responseType, //
+                debugStream, //
+                userAgent, //
+                httpClientConfig, //
+                httpClient, //
+                Collections.emptyMap());
     }
 
+    /**
+     * Creates an {@link OAuth20Service} instance using the given parameters. This
+     * method allows to specify additional request body fields.
+     *
+     *
+     * @param apiKey
+     * @param apiSecret
+     * @param callback
+     * @param defaultScope
+     * @param responseType
+     * @param debugStream
+     * @param userAgent
+     * @param httpClientConfig
+     * @param httpClient
+     * @param additionalRequestBodyFields
+     * @return a new {@link OAuth20Service} instance
+     */
     public OAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
             final String defaultScope, final String responseType, final OutputStream debugStream,
             final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient,
             final Map<String, String> additionalRequestBodyFields) {
 
-        return new CustomOAuth20Service(this, apiKey, apiSecret, callback, defaultScope, responseType, debugStream,
-                userAgent,
-                httpClientConfig, httpClient, additionalRequestBodyFields);
+        return new CustomOAuth20Service(this, //
+                apiKey, //
+                apiSecret, //
+                callback, //
+                defaultScope, //
+                responseType, //
+                debugStream, //
+                userAgent, //
+                httpClientConfig, //
+                httpClient, //
+                additionalRequestBodyFields);
     }
 }
