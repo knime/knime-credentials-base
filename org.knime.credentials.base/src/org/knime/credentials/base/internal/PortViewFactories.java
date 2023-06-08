@@ -46,7 +46,7 @@
  * History
  *   2023-04-11 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base;
+package org.knime.credentials.base.internal;
 
 import java.util.Optional;
 
@@ -56,6 +56,9 @@ import org.knime.core.webui.node.port.PortSpecViewFactory;
 import org.knime.core.webui.node.port.PortView;
 import org.knime.core.webui.node.port.PortViewFactory;
 import org.knime.core.webui.page.Page;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.CredentialPortObjectSpec;
 
 /**
  * {@link PortViewFactory} for the {@link CredentialPortObject}.
@@ -63,36 +66,18 @@ import org.knime.core.webui.page.Page;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class CredentialPortViewFactory
-        implements PortViewFactory<CredentialPortObject>, PortSpecViewFactory<CredentialPortObjectSpec> {
+class PortViewFactories {
 
-    @Override
-    public PortView createPortView(final CredentialPortObject portObject) {
+    final static PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
+
+    final static PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = PortViewFactories::createPortSpecView;
+
+    private static PortView createPortView(final CredentialPortObject portObject) {
         return new PortView() {
             @Override
             public Page getPage() {
-                return Page.builder(() -> createHtmlContent(portObject), "index.html").build();
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public Optional<InitialDataService<?>> createInitialDataService() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Optional<RpcDataService> createRpcDataService() {
-                return Optional.empty();
-            }
-        };
-    }
-
-    @Override
-    public PortView createPortView(final CredentialPortObjectSpec portObjectSpec) {
-        return new PortView() {
-            @Override
-            public Page getPage() {
-                return Page.builder(() -> "<html>Nothing to display</html>", "index.html").build();
+                var page = Page.builder(() -> createHtmlContent(portObject), "index.html").build();
+                return page;
             }
 
             @SuppressWarnings("unchecked")
@@ -124,5 +109,32 @@ public class CredentialPortViewFactory
 
         sb.append("</table></html>");
         return sb.toString();
+    }
+
+    /**
+     * @param pos
+     *            The port object spec.
+     */
+    private static PortView createPortSpecView(final CredentialPortObjectSpec pos) {
+        return new PortView() {
+            @Override
+            public Page getPage() {
+                final var html = pos.getCredentialType()//
+                        .map(type -> String.format("Credential (%s)", type.getName()))//
+                        .orElse("Credential");
+                return Page.builder(() -> html, "index.html").build();
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Optional<InitialDataService<?>> createInitialDataService() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<RpcDataService> createRpcDataService() {
+                return Optional.empty();
+            }
+        };
     }
 }
