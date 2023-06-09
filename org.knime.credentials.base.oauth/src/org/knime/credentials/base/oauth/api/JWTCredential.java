@@ -49,12 +49,18 @@
 package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.CredentialTypeRegistry;
@@ -65,7 +71,8 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public interface JWTCredential extends Credential, BearerTokenCredentialValue {
+public class JWTCredential implements Credential, BearerTokenCredentialValue
+{
     /**
      *
      * The serializer class
@@ -76,7 +83,85 @@ public interface JWTCredential extends Credential, BearerTokenCredentialValue {
     /**
      * Credential type.
      */
-    static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.JWTCredential");
+    public static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.JWTCredential");
+
+    private JWT m_accessToken;
+
+    private String m_tokenType;
+
+    private Instant m_expiresAfter;
+
+    private JWT m_idToken;
+
+    private JWT m_refreshToken;
+
+    private Function<String, JWTCredential> m_tokenRefresher;
+
+    /**
+     * Default constructor for serialization
+     */
+    public JWTCredential() {
+        // for serealization
+    }
+
+    /**
+     * @param accessToken
+     *            The access token.
+     * @param tokenType
+     *            The type of access token, e.g. "bearer".
+     * @param expiresAfter
+     *            The instant when the access token expires. May be null.
+     * @param idToken
+     *            The id token. May be null.
+     * @param refreshToken
+     *            The refresh token. May be null, however if given, then also an
+     *            accessTokenRefresher must be given.
+     * @param tokenRefresher
+     *            Function that uses the refresh token to retrieve a new access
+     *            token.
+     * @throws ParseException
+     *
+     */
+    public JWTCredential(final String accessToken, //
+            final String tokenType, //
+            final Instant expiresAfter, //
+            final String idToken, //
+            final String refreshToken, //
+            final Function<String, JWTCredential> tokenRefresher) throws ParseException {
+
+        if (StringUtils.isBlank(accessToken)) {
+            throw new IllegalArgumentException("Access token must not be blank");
+        }
+
+        if (StringUtils.isBlank(tokenType)) {
+            throw new IllegalArgumentException("Token type must not be blank");
+        }
+
+        m_accessToken = new JWT(accessToken);
+        m_tokenType = tokenType;
+        m_expiresAfter = Optional.ofNullable(expiresAfter)//
+                .or(m_accessToken::getExpirationTime)//
+                .orElse(null);
+
+        if (idToken != null) {
+            m_idToken = new JWT(idToken);
+        }
+
+        if (refreshToken != null) {
+            m_refreshToken = new JWT(refreshToken);
+            m_tokenRefresher = Objects.requireNonNull(tokenRefresher,
+                    "If a refresh token is provided, a tokenRefresher must also be given.");
+
+            // if the service has provided a refresh token, but we cannot determine when the
+            // access token expires, then we will refresh the access token every 60 seconds.
+            if (m_expiresAfter == null) {
+                m_expiresAfter = Instant.now().plusSeconds(60);
+            }
+        } else {
+            m_refreshToken = null;
+            m_tokenRefresher = null;
+        }
+    }
 
     /**
      * Returns the access token. Access token is refreshed if necessary.
@@ -85,12 +170,32 @@ public interface JWTCredential extends Credential, BearerTokenCredentialValue {
      * @throws IOException
      *             May be thrown during token refresh.
      */
-    JWT getAccessToken() throws IOException;
+    public JWT getAccessToken() throws IOException {
+        refreshTokenIfNeeded();
+        return m_accessToken;
+    }
 
     /**
-     * @return The optional holding the id token.
+     * @return the optional expiry time of the access token.
      */
-    Optional<JWT> getIdToken();
+    public Optional<Instant> getExpiresAfter() {
+        return Optional.ofNullable(m_expiresAfter);
+    }
+
+    /**
+     * @return the type of access token, e.g. "bearer".
+     */
+    public String getTokenType() {
+        return m_tokenType;
+    }
+
+    /**
+     * @return the optional ID token, see <a href=
+     *         "https://openid.net/specs/openid-connect-core-1_0.html">specification</a>).
+     */
+    public Optional<JWT> getIdToken() {
+        return Optional.ofNullable(m_idToken);
+    }
 
     /**
      * Returns the refresh token. The access token is refreshed if necessary.
@@ -99,25 +204,54 @@ public interface JWTCredential extends Credential, BearerTokenCredentialValue {
      * @throws IOException
      *             May be thrown during token refresh.
      */
-    Optional<JWT> getRefreshToken() throws IOException;
+    public Optional<JWT> getRefreshToken() throws IOException {
+        refreshTokenIfNeeded();
+        return Optional.ofNullable(m_refreshToken);
+    }
+
+    private void refreshTokenIfNeeded() throws IOException {
+        if (m_refreshToken != null && m_expiresAfter.isBefore(Instant.now())) {
+
+            try {
+                final var refreshedCredential = m_tokenRefresher.apply(m_refreshToken.asString());
+
+                if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
+                    throw new IOException(String.format("Token type has changed during refresh. Was %s, but has become %s",//
+                            m_tokenType,//
+                            refreshedCredential.m_accessToken));
+                }
+
+                m_accessToken = refreshedCredential.m_accessToken;
+                m_expiresAfter = refreshedCredential.m_expiresAfter;
+                m_idToken = refreshedCredential.m_idToken;
+
+                if (refreshedCredential.m_refreshToken != null) {
+                    m_refreshToken = refreshedCredential.m_refreshToken;
+                }
+            } catch (UncheckedIOException e) {
+                throw e.getCause();
+            }
+        }
+    }
 
     @Override
-    default String getBearerToken() throws IOException {
+    public String getBearerToken() throws IOException {
         return getAccessToken().asString();
     }
 
     @Override
-    default CredentialType getType() {
+    public CredentialType getType() {
         return TYPE;
     }
 
     @Override
-    default String[][] describe() {
+    public String[][] describe() {
         List<String[]> list = new ArrayList<>();
         try {
-            list.addAll(describe(getAccessToken(), "access-token-"));
-            getIdToken().ifPresent(t -> list.addAll(describe(t, "id-token-")));
-            getRefreshToken().ifPresent(t -> list.addAll(describe(t, "refresh-token-")));
+            list.add(new String[] { "Access token type", m_tokenType });
+            list.addAll(describe(getAccessToken(), "Access token: "));
+            getIdToken().ifPresent(t -> list.addAll(describe(t, "ID token: ")));
+            getRefreshToken().ifPresent(t -> list.addAll(describe(t, "Refresh token: ")));
         } catch (IOException ex) {// NOSONAR error message is attached to description
             list.add(new String[] { "error", ex.getMessage() });
         }

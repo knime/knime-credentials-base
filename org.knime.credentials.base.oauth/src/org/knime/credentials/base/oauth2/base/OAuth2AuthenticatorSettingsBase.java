@@ -63,6 +63,14 @@ import com.github.scribejava.core.model.Verb;
 @SuppressWarnings({ "restriction", "javadoc" })
 public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
 
+    public static final String CLIENT_TYPE_DESCRIPTION = """
+            Whether a public or confidential application flow should be used. A confidential application requires a secret.
+            """;
+
+    public static final String CLIENT_SECRET_DESCRIPTION = """
+            The secret for the confidential application.
+            """;
+
     @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth2 service.")
     public String m_tokenUrl;
 
@@ -73,9 +81,6 @@ public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
 
     @Widget(title = "ID", description = "The client/application ID. In some services this is called API key.")
     public String m_clientId;
-
-    @Widget(title = "Secret", description = "The secret for the confidential application.")
-    public String m_clientSecret;
 
     @Widget(title = "Authentication mechanism", //
             description = """

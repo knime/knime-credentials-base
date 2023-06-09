@@ -49,12 +49,15 @@
 package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
@@ -80,22 +83,25 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
      */
     static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.AccessTokenCredential");
 
-    private final String m_accessToken;
+    private String m_accessToken;
 
-    private final String m_refreshToken;
+    private String m_tokenType;
 
-    private final Instant m_expiresAfter;
+    private Instant m_expiresAfter;
 
-    private final String m_tokenType;
+    private String m_refreshToken;
+
+    private Function<String, AccessTokenCredential> m_tokenRefresher;
 
     /**
      * @param accessToken
      * @param refreshToken
      * @param expiresAfter
      * @param tokenType
+     * @param tokenRefresher
      */
     public AccessTokenCredential(final String accessToken, final String refreshToken, final Instant expiresAfter,
-            final String tokenType) {
+            final String tokenType, final Function<String, AccessTokenCredential> tokenRefresher) {
 
         if (StringUtils.isBlank(accessToken)) {
             throw new IllegalArgumentException("Access token must not be blank");
@@ -106,9 +112,23 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
         }
 
         m_accessToken = accessToken;
-        m_refreshToken = refreshToken;
-        m_expiresAfter = expiresAfter;
         m_tokenType = tokenType;
+        m_expiresAfter = expiresAfter;
+
+        if (refreshToken != null) {
+            m_refreshToken = refreshToken;
+            m_tokenRefresher = Objects.requireNonNull(tokenRefresher,
+                    "If a refresh token is provided, a tokenRefresher must also be given.");
+
+            // if the service has provided a refresh token, but we cannot determine when the
+            // access token expires, then we will refresh the access token every 60 seconds.
+            if (m_expiresAfter == null) {
+                m_expiresAfter = Instant.now().plusSeconds(60);
+            }
+        } else {
+            m_refreshToken = null;
+            m_tokenRefresher = null;
+        }
     }
 
     /**
@@ -120,15 +140,34 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
      *             May be thrown during token refresh.
      */
     public String getAccessToken() throws IOException {
-        // TODO: implement refresh
+        refreshTokenIfNeeded();
         return m_accessToken;
     }
 
-    /**
-     * @return the optional refresh token.
-     */
-    public Optional<String> getRefreshToken() {
-        return Optional.ofNullable(m_refreshToken);
+    private void refreshTokenIfNeeded() throws IOException {
+        if (m_refreshToken != null && m_expiresAfter.isBefore(Instant.now())) {
+
+            try {
+                final var refreshedCredential = m_tokenRefresher.apply(m_refreshToken);
+
+                if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
+                    throw new IOException(
+                            String.format("Token type has changed during refresh. Was %s, but has become %s", //
+                                    m_tokenType, //
+                                    refreshedCredential.m_accessToken));
+                }
+
+                m_accessToken = refreshedCredential.m_accessToken;
+                m_expiresAfter = refreshedCredential.m_expiresAfter;
+
+                if (refreshedCredential.m_refreshToken != null) {
+                    m_refreshToken = refreshedCredential.m_refreshToken;
+                }
+
+            } catch (UncheckedIOException e) {
+                throw e.getCause();
+            }
+        }
     }
 
     /**

@@ -48,16 +48,22 @@
  */
 package org.knime.credentials.base.oauth2.base;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
-import org.knime.credentials.base.oauth.api.GenericJWTCredential;
+import org.knime.credentials.base.oauth.api.JWTCredential;
 
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
  * Factory class to create a {@link Credential} from a scribejava access token.
@@ -71,9 +77,12 @@ public class CredentialFactory {
      *
      * @param scribeToken
      *            The scribejava access token.
+     * @param serviceSupplier
+     *            A supplier the creates a new (open) {@link OAuth20Service} for
+     *            token refresh.
      * @return a newly created {@link Credential}
      */
-    public static Credential fromScribeToken(final OAuth2AccessToken scribeToken) {
+    public static Credential fromScribeToken(final OAuth2AccessToken scribeToken, final Supplier<OAuth20Service> serviceSupplier) {
         var accessToken = scribeToken.getAccessToken();
         var idToken = scribeToken instanceof OpenIdOAuth2AccessToken
                 ? ((OpenIdOAuth2AccessToken) scribeToken).getOpenIdToken()
@@ -85,11 +94,35 @@ public class CredentialFactory {
         var tokenType = scribeToken.getTokenType();
 
         try {
-            return new GenericJWTCredential(scribeToken.getAccessToken(), //
+            return new JWTCredential(accessToken, //
+                    tokenType, //
+                    expiresAfter,
                     idToken, //
-                    refreshToken);
+                    refreshToken,//
+                    createTokenRefresher(serviceSupplier));
         } catch (ParseException ignored) {
-            return new AccessTokenCredential(accessToken, refreshToken, expiresAfter, tokenType);
+            return new AccessTokenCredential(accessToken, //
+                    refreshToken, //
+                    expiresAfter, //
+                    tokenType, //
+                    createTokenRefresher(serviceSupplier));
         }
+    }
+
+    private static <T extends Credential> Function<String, T> createTokenRefresher(
+            final Supplier<OAuth20Service> serviceSupplier) {
+
+        return refreshToken -> {
+            try (var service = serviceSupplier.get()) {
+                var scribeToken = service.refreshAccessToken(refreshToken);
+                return (T) fromScribeToken(scribeToken, serviceSupplier);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e.getCause());
+            }
+        };
     }
 }

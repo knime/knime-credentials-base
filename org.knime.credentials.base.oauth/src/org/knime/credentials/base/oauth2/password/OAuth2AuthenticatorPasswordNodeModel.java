@@ -151,7 +151,7 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
                     settings.m_pwdGrantUsername, //
                     settings.m_pwdGrantPassword, //
                     settings.m_scopes);
-            return CredentialFactory.fromScribeToken(scribeJavaToken);
+            return CredentialFactory.fromScribeToken(scribeJavaToken, () -> builder.build(api));
         }
     }
 }

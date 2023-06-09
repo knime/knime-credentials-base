@@ -44,16 +44,9 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-07 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.clientcredentials;
-
-import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeVerb;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
+package org.knime.credentials.base.oauth2.authcode;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.ExecutionContext;
@@ -68,79 +61,77 @@ import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.credentials.base.oauth2.authcode.OAuth2AuthenticatorAuthCodeSettings.ServiceType;
 import org.knime.credentials.base.oauth2.base.CredentialFactory;
-import org.knime.credentials.base.oauth2.base.CustomApi20;
-import org.knime.credentials.base.oauth2.base.CustomOAuth2ServiceBuilder;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
 
 /**
- * Node model of the OAuth2 authenticator (Client Credentials) node. Performs
- * OAuth authentication using the client credentials grant and produces
- * credential port object with {@link JWTCredential}.
+ * Node model of the OAuth2 authenticator (Interactive) node. Performs OAuth
+ * authentication using the Auth code or implicit grant and produces credential
+ * port object with {@link JWTCredential}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAuth2AuthenticatorClientCredsSettings> {
+public class OAuth2AuthenticatorAuthCodeNodeModel extends WebUINodeModel<OAuth2AuthenticatorAuthCodeSettings> {
 
     /**
      * @param configuration
      *            The node configuration.
      */
-    protected OAuth2AuthenticatorClientCredsNodeModel(final WebUINodeConfiguration configuration) {
-        super(configuration, OAuth2AuthenticatorClientCredsSettings.class);
+    protected OAuth2AuthenticatorAuthCodeNodeModel(final WebUINodeConfiguration configuration) {
+        super(configuration, OAuth2AuthenticatorAuthCodeSettings.class);
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-            final OAuth2AuthenticatorClientCredsSettings modelSettings) throws InvalidSettingsException {
+            final OAuth2AuthenticatorAuthCodeSettings modelSettings) throws InvalidSettingsException {
         validate(modelSettings);
         return new PortObjectSpec[] { createSpec(null) };
     }
 
-    private static CredentialPortObjectSpec createSpec(final CredentialType credentialType) {
-        return new CredentialPortObjectSpec(credentialType);
+    private static CredentialPortObjectSpec createSpec(final CredentialType type) {
+        return new CredentialPortObjectSpec(type);
     }
 
-    private static void validate(final OAuth2AuthenticatorClientCredsSettings settings)
+    private static void validate(final OAuth2AuthenticatorAuthCodeSettings settings)
             throws InvalidSettingsException {
-        if (StringUtils.isEmpty(settings.m_tokenUrl)) {
-            throw new InvalidSettingsException("Token endpoint URL is required");
+        if (settings.m_serviceType == ServiceType.CUSTOM) {
+            if (StringUtils.isEmpty(settings.m_tokenUrl)) {
+                throw new InvalidSettingsException("Token endpoint URL is required");
+            }
+            if (StringUtils.isEmpty(settings.m_authorizationUrl)) {
+                throw new InvalidSettingsException("Authorization endpoing URL is required");
+            }
+        }
+
+        if (settings.m_serviceType == ServiceType.STANDARD) {
+            if (settings.m_standardService == null) {
+                throw new InvalidSettingsException("No service is selected");
+            }
         }
 
         if (StringUtils.isEmpty(settings.m_clientId)) {
             throw new InvalidSettingsException("Client/App ID is required");
         }
 
-        if (StringUtils.isEmpty(settings.m_clientSecret)) {
+        if (settings.m_clientType == ClientType.CONFIDENTIAL && StringUtils.isEmpty(settings.m_clientSecret)) {
             throw new InvalidSettingsException("Client/App secret is required");
         }
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-            final OAuth2AuthenticatorClientCredsSettings modelSettings) throws Exception {
-
+            final OAuth2AuthenticatorAuthCodeSettings modelSettings) throws Exception {
         var credential = fetchCredential(modelSettings);
         var uuid = CredentialCache.store(credential);
         return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
     }
 
-    private static Credential fetchCredential(final OAuth2AuthenticatorClientCredsSettings settings)
-            throws IOException, InterruptedException, ExecutionException, ParseException {
+    private static Credential fetchCredential(final OAuth2AuthenticatorAuthCodeSettings settings)
+            throws Exception {
 
-        final var api = new CustomApi20(settings.m_tokenUrl, //
-                "", //
-                toScribeVerb(settings.m_tokenRequestMethod), //
-                settings.m_clientAuthMechanism);
-
-        var builder = new CustomOAuth2ServiceBuilder(settings.m_clientId);
-        builder.apiSecret(settings.m_clientSecret);
-        Arrays.stream(settings.m_additionalRequestFields)//
-                .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
-
-        try (var service = builder.build(api)) {
-            var scribeJavaToken = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
-            return CredentialFactory.fromScribeToken(scribeJavaToken, () -> builder.build(api));
-        }
+        var scribeJavaToken = settings.fetchAccessToken();
+        return CredentialFactory.fromScribeToken(scribeJavaToken, () -> settings.createService());
     }
 }

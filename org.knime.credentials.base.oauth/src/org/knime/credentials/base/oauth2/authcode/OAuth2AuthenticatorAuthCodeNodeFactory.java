@@ -44,50 +44,68 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-07 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.clientcredentials;
+package org.knime.credentials.base.oauth2.authcode;
 
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeFactory;
 import org.knime.credentials.base.CredentialPortObject;
 
 /**
- * The node factory for the {@link OAuth2AuthenticatorClientCredsNodeModel} node.
+ * The node factory for the {@link OAuth2AuthenticatorAuthCodeNodeModel}
+ * node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorClientCredsNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorClientCredsNodeModel> {
+public class OAuth2AuthenticatorAuthCodeNodeFactory
+        extends WebUINodeFactory<OAuth2AuthenticatorAuthCodeNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/client-credentials/">client
-                    credentials</a> grant flow.
+                    <p>OAuth2 Authenticator that supports the
+                    <a href="https://oauth.net/2/grant-types/authorization-code/">Authorization Code</a> grant flow.
                     </p>
-                    <p>The client credentials grant is used to obtain an access token on behalf of an application/client,
-                    without having the context of a user.
+                    <p>The auth code flow is used to obtain an access token via an interactive login, which works as follows:
+                    <ul>
+                        <li><b>In the node settings:</b> the user configures provides all required information and then
+                             clicks on "Login", which will open a new browser window.</li>
+                        <li><b>In a new browser window:</b>The user logs into the authentication service, consenting
+                            to any required permissions (scopes). At the end of this process the authentication service
+                            redirects the browser to the configured redirect URL, passing an <i>authorization code</i>.</li>
+                        <li><b>In the node settings:</b> The authorization code is received (via the redirect) and is used to acquire
+                            an access token. The user can now close with node settings (OK).</li>
+                        <li>The node can now be executed.</li>
+                        <li>The user closes the workflow, which deletes the access token. Opening the workflow again will
+                        require a fresh interactive login as above.</li>
+                    </ul>
+                    </p>
+                    <p>
+                    <b>Note:</b> The auth code flow is interactive. Every time the workflow is opened, a user has to log into the OAuth
+                    service. For these reasons, the node can only be used in KNIME Analytics Platform. The node does not support execution
+                    on KNIME (Business) Hub, also not via Remote Workflow Editor.
                     </p>
             """;
-
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Client Credentials)")//
+            .name("OAuth2 Authenticator")//
             .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the client credentials grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorClientCredsSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
+            .shortDescription("OAuth2 Authenticator that supports the Authorization Code grant flow.")//
+            .fullDescription(FULL_DESCRIPTION) //
+            .modelSettingsClass(OAuth2AuthenticatorAuthCodeSettings.class)//
+            .addOutputPort("Credential", CredentialPortObject.TYPE,
+                    "Credential with access token.")//
             .sinceVersion(5, 1, 0)//
             .build();
 
     /**
      * Creates new instance.
      */
-    public OAuth2AuthenticatorClientCredsNodeFactory() {
+    public OAuth2AuthenticatorAuthCodeNodeFactory() {
         super(CONFIGURATION);
     }
 
     @Override
-    public OAuth2AuthenticatorClientCredsNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorClientCredsNodeModel(CONFIGURATION);
+    public OAuth2AuthenticatorAuthCodeNodeModel createNodeModel() {
+        return new OAuth2AuthenticatorAuthCodeNodeModel(CONFIGURATION);
     }
 }

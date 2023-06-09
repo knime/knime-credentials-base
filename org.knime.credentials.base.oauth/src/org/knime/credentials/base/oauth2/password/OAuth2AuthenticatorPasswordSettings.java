@@ -59,8 +59,11 @@ import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
 @SuppressWarnings("restriction")
 public final class OAuth2AuthenticatorPasswordSettings extends OAuth2AuthenticatorSettingsBase {
 
-    @Widget(title = "Client/App type", description = "Whether a public or confidential application flow should be used. A confidential application requires a secret.")
+    @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
     ClientType m_clientType = ClientType.PUBLIC;
+
+    @Widget(title = "Secret", description = CLIENT_SECRET_DESCRIPTION)
+    String m_clientSecret;
 
     @Widget(title = "Username", description = "The username to use.")
     String m_pwdGrantUsername;

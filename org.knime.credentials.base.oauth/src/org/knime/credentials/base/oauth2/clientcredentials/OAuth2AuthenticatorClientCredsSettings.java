@@ -60,6 +60,9 @@ import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
 @SuppressWarnings("restriction")
 final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettingsBase {
 
+    @Widget(title = "Secret", description = CLIENT_SECRET_DESCRIPTION)
+    String m_clientSecret;
+
     static final class AdditionalRequestField implements DefaultNodeSettings {
         @Widget(title = "Field name", description = "Name of the additional request body field.")
         String m_name;

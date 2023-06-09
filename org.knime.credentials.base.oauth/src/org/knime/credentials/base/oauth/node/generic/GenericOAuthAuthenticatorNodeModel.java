@@ -63,12 +63,12 @@ import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.oauth.api.GenericJWTCredential;
 import org.knime.credentials.base.oauth.api.JWTCredential;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ClientType;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.GrantType;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.HttpRequestMethod;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ServiceType;
+import org.knime.credentials.base.oauth2.base.CredentialFactory;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -102,7 +102,7 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
     }
 
     private static CredentialPortObjectSpec createSpec() {
-        return new CredentialPortObjectSpec(JWTCredential.TYPE);
+        return new CredentialPortObjectSpec(null);
     }
 
     private static void validate(final GenericOAuthAuthenticatorSettings settings) throws InvalidSettingsException {
@@ -201,7 +201,7 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
 
         try (var service = builder.build(api)) {
             var token = fetchAccessToken(service, settings);
-            return new GenericJWTCredential(token.getAccessToken(), null, token.getRefreshToken());
+            return CredentialFactory.fromScribeToken(token, () -> builder.build(api));
         }
     }
 

@@ -36,5 +36,11 @@
             factory-class="org.knime.credentials.base.oauth2.clientcredentials.OAuth2AuthenticatorClientCredsNodeFactory"
             hidden="false">
       </node>
+      <node
+            category-path="/io/connectors"
+            deprecated="false"
+            factory-class="org.knime.credentials.base.oauth2.authcode.OAuth2AuthenticatorAuthCodeNodeFactory"
+            hidden="false">
+      </node>
    </extension>
 </plugin>

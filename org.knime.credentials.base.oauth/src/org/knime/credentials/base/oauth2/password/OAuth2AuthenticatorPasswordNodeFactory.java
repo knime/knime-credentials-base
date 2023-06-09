@@ -62,7 +62,7 @@ public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAu
 
     private static final String FULL_DESCRIPTION = """
                     <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant.
+                    owner password credentials (ROPC)</a> grant flow.
                     </p>
                     <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
                     discouraged and the client credentials grant should be used instead.</p>
@@ -74,7 +74,7 @@ public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAu
             .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
             .fullDescription(FULL_DESCRIPTION)
             .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential")//
+            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
             .sinceVersion(5, 1, 0)//
             .build();
 
