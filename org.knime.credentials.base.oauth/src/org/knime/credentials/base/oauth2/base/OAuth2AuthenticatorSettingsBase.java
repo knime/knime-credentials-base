@@ -53,6 +53,9 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 
 import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
+import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
+import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
  * Base class for OAuth2 Authenticator settings. Defines the common settings and
@@ -115,5 +118,13 @@ public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
 
     public static Verb toScribeVerb(final HttpRequestMethod method) {
         return Verb.valueOf(method.toString());
+    }
+
+    public static ClientAuthentication toScribeClientAuthentication(final ClientAuthenticationType authType) {
+        if (authType == ClientAuthenticationType.HTTP_BASIC_AUTH) {
+            return HttpBasicAuthenticationScheme.instance();
+        } else {
+            return RequestBodyAuthenticationScheme.instance();
+        }
     }
 }

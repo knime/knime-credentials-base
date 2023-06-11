@@ -48,20 +48,16 @@
  */
 package org.knime.credentials.base.oauth2.authcode;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.oauth2.base.CustomApi20;
+import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
+import org.knime.credentials.base.oauth.api.scribejava.InteractiveLogin;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
-import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
@@ -110,27 +106,14 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
      *
      * @param settings
      *            The node settings.
-     * @return The {@link CompletableFuture} for auth code.
-     * @throws IOException
+     * @return the {@link OAuth2AccessToken} if the login was successful.
+     * @throws Exception
+     *             if the login failed for some reason.
      */
-    OAuth2AccessToken fetchAccessToken() throws Exception {
-
-        try (var service = createService()) {
-            var state = UUID.randomUUID().toString().replace("-", "");
-            var authorizationUrl = service.createAuthorizationUrlBuilder()//
-                    .scope(m_scopes)//
-                    .state(state)//
-                    .build();
-            var authCode = new InteractiveLogin(state)//
-                    .login(URI.create(authorizationUrl), URI.create(m_redirectUrl));
-
-            try {
-                return service.getAccessToken(AccessTokenRequestParams.create(authCode).scope(m_scopes));
-            } catch (OAuth2AccessTokenErrorResponse e) {
-                throw new Exception(String.format("Login failed (%s): %s", //
-                        e.getError().getErrorString(), //
-                        e.getErrorDescription()), e);
-            }
+    static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings) throws Exception {
+        try (var service = settings.createService()) {
+            return new InteractiveLogin(service, URI.create(settings.m_redirectUrl))//
+                    .login(settings.m_scopes);
         }
     }
 
@@ -154,7 +137,7 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
             api = new CustomApi20(m_tokenUrl, //
                     m_authorizationUrl, //
                     toScribeVerb(m_tokenRequestMethod), //
-                    m_clientAuthMechanism);
+                    toScribeClientAuthentication(m_clientAuthMechanism));
         } else {
             api = m_standardService.getApi();
         }

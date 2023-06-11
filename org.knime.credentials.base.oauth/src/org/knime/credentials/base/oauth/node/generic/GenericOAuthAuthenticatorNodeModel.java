@@ -64,11 +64,11 @@ import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ClientType;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.GrantType;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.HttpRequestMethod;
 import org.knime.credentials.base.oauth.node.generic.GenericOAuthAuthenticatorSettings.ServiceType;
-import org.knime.credentials.base.oauth2.base.CredentialFactory;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;

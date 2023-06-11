@@ -48,6 +48,7 @@
  */
 package org.knime.credentials.base.oauth2.password;
 
+import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeClientAuthentication;
 import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeVerb;
 
 import java.io.IOException;
@@ -67,8 +68,8 @@ import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth2.base.CredentialFactory;
-import org.knime.credentials.base.oauth2.base.CustomApi20;
+import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
+import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
@@ -144,7 +145,7 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
         final var api = new CustomApi20(settings.m_tokenUrl, //
                 "", //
                 toScribeVerb(settings.m_tokenRequestMethod), //
-                settings.m_clientAuthMechanism);
+                toScribeClientAuthentication(settings.m_clientAuthMechanism));
 
         try (var service = builder.build(api)) {
             var scribeJavaToken = service.getAccessTokenPasswordGrant(//

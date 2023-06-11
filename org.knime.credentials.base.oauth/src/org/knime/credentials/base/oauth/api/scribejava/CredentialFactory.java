@@ -46,7 +46,7 @@
  * History
  *   2023-06-07 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.oauth.api.scribejava;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

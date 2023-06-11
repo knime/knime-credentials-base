@@ -61,8 +61,8 @@ import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
 import org.knime.credentials.base.oauth2.authcode.OAuth2AuthenticatorAuthCodeSettings.ServiceType;
-import org.knime.credentials.base.oauth2.base.CredentialFactory;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
 
 /**
@@ -131,7 +131,7 @@ public class OAuth2AuthenticatorAuthCodeNodeModel extends WebUINodeModel<OAuth2A
     private static Credential fetchCredential(final OAuth2AuthenticatorAuthCodeSettings settings)
             throws Exception {
 
-        var scribeJavaToken = settings.fetchAccessToken();
+        var scribeJavaToken = OAuth2AuthenticatorAuthCodeSettings.fetchAccessToken(settings);
         return CredentialFactory.fromScribeToken(scribeJavaToken, () -> settings.createService());
     }
 }

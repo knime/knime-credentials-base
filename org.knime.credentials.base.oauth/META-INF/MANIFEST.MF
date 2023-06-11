@@ -3,6 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: KNIME OAuth credentials type implementaion.
 Bundle-SymbolicName: org.knime.credentials.base.oauth;singleton:=true
 Bundle-Version: 5.1.0.qualifier
+Export-Package: org.knime.credentials.base.oauth.api,
+ org.knime.credentials.base.oauth.api.scribejava
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.knime.workbench.repository;bundle-version="[5.1.0,6.0.0)",

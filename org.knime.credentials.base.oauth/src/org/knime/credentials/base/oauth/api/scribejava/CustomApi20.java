@@ -46,13 +46,11 @@
  * History
  *   2023-05-08 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.oauth.api.scribejava;
 
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Map;
-
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientAuthenticationType;
 
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.httpclient.HttpClient;
@@ -60,8 +58,6 @@ import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
-import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
-import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
  * {@link DefaultApi20} implementation that allows to configure several
@@ -74,7 +70,7 @@ public class CustomApi20 extends DefaultApi20 {
     private final String m_tokenUrl;
     private final String m_authorizationUrl;
     private final Verb m_requestMethod;
-    private final ClientAuthenticationType m_clientAuthentication;
+    private final ClientAuthentication m_clientAuthentication;
 
     /**
      * @param tokenUrl
@@ -88,7 +84,7 @@ public class CustomApi20 extends DefaultApi20 {
      *
      */
     public CustomApi20(final String tokenUrl, final String authorizationUrl, final Verb requestMethod,
-            final ClientAuthenticationType clientAuthentication) {
+            final ClientAuthentication clientAuthentication) {
         m_tokenUrl = tokenUrl;
         m_authorizationUrl = authorizationUrl;
         m_requestMethod = requestMethod;
@@ -112,11 +108,7 @@ public class CustomApi20 extends DefaultApi20 {
 
     @Override
     public ClientAuthentication getClientAuthentication() {
-        if (m_clientAuthentication == ClientAuthenticationType.HTTP_BASIC_AUTH) {
-            return HttpBasicAuthenticationScheme.instance();
-        } else {
-            return RequestBodyAuthenticationScheme.instance();
-        }
+        return m_clientAuthentication;
     }
 
     @Override

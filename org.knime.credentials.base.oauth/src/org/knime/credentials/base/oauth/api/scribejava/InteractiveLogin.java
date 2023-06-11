@@ -46,14 +46,16 @@
  * History
  *   2023-06-06 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.authcode;
+package org.knime.credentials.base.oauth.api.scribejava;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -62,6 +64,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.knime.core.util.DesktopUtil;
 
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
+import com.github.scribejava.core.oauth.AccessTokenRequestParams;
+import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -73,9 +79,11 @@ import com.sun.net.httpserver.HttpServer;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-class InteractiveLogin {
+public class InteractiveLogin {
 
-    private final String m_state;
+    private final OAuth20Service m_service;
+    private final URI m_redirectUri;
+    private String m_state;
     private CompletableFuture<String> m_authCodeFuture;
     private HttpServer m_server;
 
@@ -83,12 +91,15 @@ class InteractiveLogin {
     /**
      * Creates a new instance.
      *
-     * @param state
-     *            The state that was passed to the OAuth service as part of the
-     *            authorization endpoint URL.
+     * @param service
+     *            The {@link OAuth20Service} instance to use.
+     * @param redirectUri
+     *            The redirect URL.
      */
-    InteractiveLogin(final String state) {
-        m_state = state;
+    public InteractiveLogin(final OAuth20Service service, final URI redirectUri) {
+        m_service = service;
+        m_redirectUri = redirectUri;
+        // state parameter that associates authorization request with redirect response
     }
 
     /**
@@ -96,23 +107,28 @@ class InteractiveLogin {
      * callback URL. After authorization code is received it is stored into the
      * cache and listener is disposed.
      *
-     * @param url
-     *            The authorization URL.
-     * @param port
-     *            The redirect URL port.
-     * @return The {@link CompletableFuture} for the auth code.
-     * @throws IOException
+     * @param scopes
+     *            The scopes to request for the access token.
+     * @return the {@link OAuth2AccessToken} if the login was successful.
+     * @throws Exception
+     *             if the login failed for some reason.
      */
-    String login(final URI authorizationEndpointurl, final URI redirectUrl)
-            throws Exception {
+    public OAuth2AccessToken login(final String scopes) throws Exception {
+        m_state = UUID.randomUUID().toString().replace("-", "");
+
+        final var authorizationUrl = m_service.createAuthorizationUrlBuilder()//
+                .scope(scopes)//
+                .state(m_state)//
+                .build();
 
         m_authCodeFuture = new CompletableFuture<>();
 
-        setupListener(redirectUrl);
+        setupListener(m_redirectUri);
 
+        final String authCode;
         try {
-            DesktopUtil.browse(authorizationEndpointurl.toURL());
-            return m_authCodeFuture.get(1, TimeUnit.MINUTES);
+            DesktopUtil.browse(new URL(authorizationUrl));
+            authCode = m_authCodeFuture.get(1, TimeUnit.MINUTES);
         } catch (ExecutionException e) {
             throw (Exception) e.getCause();
         } catch (TimeoutException e) {
@@ -122,6 +138,15 @@ class InteractiveLogin {
         } finally {
             stopListener();
         }
+
+        try {
+            return m_service.getAccessToken(AccessTokenRequestParams.create(authCode).scope(scopes));
+        } catch (OAuth2AccessTokenErrorResponse e) {
+            throw new Exception(String.format("Login failed (%s): %s", //
+                    e.getError().getErrorString(), //
+                    e.getErrorDescription()), e);
+        }
+
     }
 
     private void setupListener(final URI redirectUrl) throws IOException {
