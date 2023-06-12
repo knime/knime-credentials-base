@@ -50,16 +50,29 @@ package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
 
+import org.knime.credentials.base.Credential;
+
 /**
- * An interface representing an object that provides access to a bearer token.
+ * An interface to mark certain {@link Credential}s as useable in the HTTP
+ * Authorization header (see <a href=
+ * "https://datatracker.ietf.org/doc/html/rfc9110#name-http-authentication"></a>.
+ * This interface then also supplies the authenticatin scheme and parameters.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface BearerTokenCredentialValue {
+public interface HttpAuthorizationHeaderCredentialValue {
 
     /**
-     * @return The bearer token.
-     * @throws IOException
+     * @return the auth scheme to use, e.g. "Basic" or "Bearer".
      */
-    String getBearerToken() throws IOException;
+    String getAuthScheme();
+
+    /**
+     * @return the parameter(s) to use, e.g. an access token.
+     * @throws IOException
+     *             may be thrown in certain cases where it is necessary to perform
+     *             I/O in order to retrieve the current parameters, e.g. when an
+     *             access token needs to be refreshed.
+     */
+    String getAuthParameters() throws IOException;
 }

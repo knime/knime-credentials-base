@@ -71,7 +71,7 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class JWTCredential implements Credential, BearerTokenCredentialValue
+public class JWTCredential implements Credential, HttpAuthorizationHeaderCredentialValue
 {
     /**
      *
@@ -235,7 +235,12 @@ public class JWTCredential implements Credential, BearerTokenCredentialValue
     }
 
     @Override
-    public String getBearerToken() throws IOException {
+    public String getAuthScheme() {
+        return Character.toUpperCase(m_tokenType.charAt(0)) + m_tokenType.substring(1);
+    }
+
+    @Override
+    public String getAuthParameters() throws IOException {
         return getAccessToken().asString();
     }
 

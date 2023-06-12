@@ -70,7 +70,7 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public final class AccessTokenCredential implements Credential, BearerTokenCredentialValue {
+public final class AccessTokenCredential implements Credential, HttpAuthorizationHeaderCredentialValue {
     /**
      *
      * The serializer class
@@ -81,7 +81,7 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
     /**
      * Credential type.
      */
-    static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.AccessTokenCredential");
+    public static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.AccessTokenCredential");
 
     private String m_accessToken;
 
@@ -119,7 +119,6 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
             m_refreshToken = refreshToken;
             m_tokenRefresher = Objects.requireNonNull(tokenRefresher,
                     "If a refresh token is provided, a tokenRefresher must also be given.");
-
             // if the service has provided a refresh token, but we cannot determine when the
             // access token expires, then we will refresh the access token every 60 seconds.
             if (m_expiresAfter == null) {
@@ -185,7 +184,12 @@ public final class AccessTokenCredential implements Credential, BearerTokenCrede
     }
 
     @Override
-    public String getBearerToken() throws IOException {
+    public String getAuthScheme() {
+        return Character.toUpperCase(m_tokenType.charAt(0)) + m_tokenType.substring(1);
+    }
+
+    @Override
+    public String getAuthParameters() throws IOException {
         return getAccessToken();
     }
 
