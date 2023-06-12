@@ -24,6 +24,7 @@
 
 	<modules>
 		<module>org.knime.credentials.base</module>
+		<module>org.knime.credentials.base.oauth</module>
 		<module>org.knime.features.credentials.base</module>
 		<module>org.knime.update.credentials.base</module>
 	</modules>
