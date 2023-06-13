@@ -60,8 +60,10 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
+ * Custom {@link OAuth20Service} subclass that can inject custom request body
+ * fields into the client credentials grant request.
  *
- * @author bjoern
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
 class CustomOAuth20Service extends OAuth20Service {
 
@@ -106,5 +108,4 @@ class CustomOAuth20Service extends OAuth20Service {
 
         return request;
     }
-
 }

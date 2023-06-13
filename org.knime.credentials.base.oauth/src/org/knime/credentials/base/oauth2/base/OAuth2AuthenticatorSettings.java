@@ -53,18 +53,19 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 
 import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
 import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
 import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
- * Base class for OAuth2 Authenticator settings. Defines the common settings and
- * enums of all OAuth2 Authenticator settings classes.
+ * Base class for OAuth2 Authenticator settings. Defines settings and enums
+ * common to all OAuth2 Authenticator nodes.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings({ "restriction", "javadoc" })
-public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
+public abstract class OAuth2AuthenticatorSettings implements DefaultNodeSettings {
 
     public static final String CLIENT_TYPE_DESCRIPTION = """
             Whether a public or confidential application flow should be used. A confidential application requires a secret.
@@ -127,4 +128,6 @@ public class OAuth2AuthenticatorSettingsBase implements DefaultNodeSettings {
             return RequestBodyAuthenticationScheme.instance();
         }
     }
+
+    public abstract OAuth20Service createService();
 }

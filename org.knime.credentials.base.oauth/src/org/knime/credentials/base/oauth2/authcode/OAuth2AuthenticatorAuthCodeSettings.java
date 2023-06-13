@@ -51,9 +51,9 @@ package org.knime.credentials.base.oauth2.authcode;
 import java.net.URI;
 
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
-import org.knime.credentials.base.oauth.api.scribejava.InteractiveLogin;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -61,12 +61,12 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * OAuth2 Authenticator (Interactive) node settings.
+ * Node settings of the (interactive) OAuth2 Authenticator node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSettingsBase {
+public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSettings {
 
     @Widget(title = "Service type", description = """
             Whether to connect to a standard OAuth service from a predefined list, or
@@ -112,7 +112,7 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
      */
     static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings) throws Exception {
         try (var service = settings.createService()) {
-            return new InteractiveLogin(service, URI.create(settings.m_redirectUrl))//
+            return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
                     .login(settings.m_scopes);
         }
     }
@@ -122,15 +122,8 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
      *
      * @return The {@link OAuth20Service} instance.
      */
+    @Override
     public OAuth20Service createService() {
-        var builder = new ServiceBuilder(m_clientId);
-
-        builder.callback(m_redirectUrl);
-
-        if (m_clientType == ClientType.CONFIDENTIAL) {
-            builder.apiSecret(m_clientSecret);
-        }
-
         final DefaultApi20 api;
 
         if (m_serviceType == ServiceType.CUSTOM) {
@@ -140,6 +133,12 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
                     toScribeClientAuthentication(m_clientAuthMechanism));
         } else {
             api = m_standardService.getApi();
+        }
+
+        var builder = new ServiceBuilder(m_clientId);
+        builder.callback(m_redirectUrl);
+        if (m_clientType == ClientType.CONFIDENTIAL) {
+            builder.apiSecret(m_clientSecret);
         }
 
         return builder.build(api);

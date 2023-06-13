@@ -48,40 +48,25 @@
  */
 package org.knime.credentials.base.oauth2.clientcredentials;
 
-import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeClientAuthentication;
-import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeVerb;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.lang3.StringUtils;
-import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeModel;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortObject;
-import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialType;
-import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
-import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
+import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
+
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node model of the OAuth2 authenticator (Client Credentials) node. Performs
- * OAuth authentication using the client credentials grant and produces
- * credential port object with {@link JWTCredential}.
+ * Node model for the OAuth2 Authenticator (Client Credentials) node. Performs
+ * OAuth authentication using the client credentials grant.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAuth2AuthenticatorClientCredsSettings> {
+public class OAuth2AuthenticatorClientCredsNodeModel
+        extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorClientCredsSettings> {
 
     /**
      * @param configuration
@@ -92,17 +77,7 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-            final OAuth2AuthenticatorClientCredsSettings modelSettings) throws InvalidSettingsException {
-        validate(modelSettings);
-        return new PortObjectSpec[] { createSpec(null) };
-    }
-
-    private static CredentialPortObjectSpec createSpec(final CredentialType credentialType) {
-        return new CredentialPortObjectSpec(credentialType);
-    }
-
-    private static void validate(final OAuth2AuthenticatorClientCredsSettings settings)
+    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorClientCredsSettings settings)
             throws InvalidSettingsException {
         if (StringUtils.isEmpty(settings.m_tokenUrl)) {
             throw new InvalidSettingsException("Token endpoint URL is required");
@@ -118,30 +93,8 @@ public class OAuth2AuthenticatorClientCredsNodeModel extends WebUINodeModel<OAut
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-            final OAuth2AuthenticatorClientCredsSettings modelSettings) throws Exception {
-
-        var credential = fetchCredential(modelSettings);
-        var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
-    }
-
-    private static Credential fetchCredential(final OAuth2AuthenticatorClientCredsSettings settings)
-            throws IOException, InterruptedException, ExecutionException, ParseException {
-
-        final var api = new CustomApi20(settings.m_tokenUrl, //
-                "", //
-                toScribeVerb(settings.m_tokenRequestMethod), //
-                toScribeClientAuthentication(settings.m_clientAuthMechanism));
-
-        var builder = new CustomOAuth2ServiceBuilder(settings.m_clientId);
-        builder.apiSecret(settings.m_clientSecret);
-        Arrays.stream(settings.m_additionalRequestFields)//
-                .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
-
-        try (var service = builder.build(api)) {
-            var scribeJavaToken = service.getAccessTokenClientCredentialsGrant(settings.m_scopes);
-            return CredentialFactory.fromScribeToken(scribeJavaToken, () -> builder.build(api));
-        }
+    protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorClientCredsSettings settings,
+            final OAuth20Service service) throws Exception {
+        return new ClientCredentialsFlow(service).login(settings.m_scopes);
     }
 }

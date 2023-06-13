@@ -66,7 +66,8 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Factory class to create a {@link Credential} from a scribejava access token.
+ * Factory class to create a {@link Credential} from a scribejava
+ * {@link OAuth2AccessToken}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
@@ -109,6 +110,7 @@ public class CredentialFactory {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static <T extends Credential> Function<String, T> createTokenRefresher(
             final Supplier<OAuth20Service> serviceSupplier) {
 

@@ -145,7 +145,7 @@ public class CustomApi20 extends DefaultApi20 {
      * @param additionalRequestBodyFields
      * @return a new {@link OAuth20Service} instance
      */
-    public OAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
+    public CustomOAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
             final String defaultScope, final String responseType, final OutputStream debugStream,
             final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient,
             final Map<String, String> additionalRequestBodyFields) {

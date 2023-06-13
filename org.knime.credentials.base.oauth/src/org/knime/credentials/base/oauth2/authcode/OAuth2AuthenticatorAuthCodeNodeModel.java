@@ -49,31 +49,27 @@
 package org.knime.credentials.base.oauth2.authcode;
 
 import org.apache.commons.lang3.StringUtils;
-import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeModel;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortObject;
-import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
 import org.knime.credentials.base.oauth2.authcode.OAuth2AuthenticatorAuthCodeSettings.ServiceType;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.ClientType;
+
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node model of the OAuth2 authenticator (Interactive) node. Performs OAuth
+ * Node model of the (interactive) OAuth2 authenticator node. Performs OAuth
  * authentication using the Auth code or implicit grant and produces credential
  * port object with {@link JWTCredential}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorAuthCodeNodeModel extends WebUINodeModel<OAuth2AuthenticatorAuthCodeSettings> {
+public class OAuth2AuthenticatorAuthCodeNodeModel
+        extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorAuthCodeSettings> {
 
     /**
      * @param configuration
@@ -84,18 +80,9 @@ public class OAuth2AuthenticatorAuthCodeNodeModel extends WebUINodeModel<OAuth2A
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-            final OAuth2AuthenticatorAuthCodeSettings modelSettings) throws InvalidSettingsException {
-        validate(modelSettings);
-        return new PortObjectSpec[] { createSpec(null) };
-    }
-
-    private static CredentialPortObjectSpec createSpec(final CredentialType type) {
-        return new CredentialPortObjectSpec(type);
-    }
-
-    private static void validate(final OAuth2AuthenticatorAuthCodeSettings settings)
+    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorAuthCodeSettings settings)
             throws InvalidSettingsException {
+
         if (settings.m_serviceType == ServiceType.CUSTOM) {
             if (StringUtils.isEmpty(settings.m_tokenUrl)) {
                 throw new InvalidSettingsException("Token endpoint URL is required");
@@ -121,17 +108,8 @@ public class OAuth2AuthenticatorAuthCodeNodeModel extends WebUINodeModel<OAuth2A
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-            final OAuth2AuthenticatorAuthCodeSettings modelSettings) throws Exception {
-        var credential = fetchCredential(modelSettings);
-        var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
-    }
-
-    private static Credential fetchCredential(final OAuth2AuthenticatorAuthCodeSettings settings)
-            throws Exception {
-
-        var scribeJavaToken = OAuth2AuthenticatorAuthCodeSettings.fetchAccessToken(settings);
-        return CredentialFactory.fromScribeToken(scribeJavaToken, () -> settings.createService());
+    protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
+            final OAuth20Service service) throws Exception {
+        return OAuth2AuthenticatorAuthCodeSettings.fetchAccessToken(settings);
     }
 }

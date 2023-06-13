@@ -68,8 +68,8 @@ import com.github.scribejava.apis.AWeberApi;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 
 /**
- * The class generates enum containing all of the supported services from
- * scrive-java library. Is is done by scanning the package containing api
+ * The class generates enum containing all of the supported OAuth 2.0 services
+ * from scrive-java library. Is is done by scanning the package containing api
  * classes.
  *
  * In order to execute this class scribe-java library has to be present in the

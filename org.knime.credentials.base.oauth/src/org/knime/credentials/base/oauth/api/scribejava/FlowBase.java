@@ -44,49 +44,86 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-12 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth.api.scribejava;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
+import java.io.IOException;
+
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node factory for the OAuth2 Authenticator (Password) node.
+ * Base class for OAuth2 based login implementations. Each subclasses implements
+ * an OAuth 2 authentication flow and produces a {@link OAuth2AccessToken}.
+ * Errors during login are handled consistently across subclasses.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-@SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
+abstract class FlowBase {
 
-    private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant flow.
-                    </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
-            """;
-
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
-            .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
-            .sinceVersion(5, 1, 0)//
-            .build();
+    private final OAuth20Service m_service;
 
     /**
-     * Creates new instance.
+     * Creates a new instance.
+     *
+     *
+     * @param service
      */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
-        super(CONFIGURATION);
+    FlowBase(final OAuth20Service service) {
+        m_service = service;
     }
 
-    @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
+    /**
+     * @return the underlying {@link OAuth20Service}.
+     */
+    public final OAuth20Service getService() {
+        return m_service;
+    }
+
+    /**
+     * Performs the actual login.
+     *
+     * @param scopes
+     *            The OAuth2 scopes to request.
+     * @return the {@link OAuth2AccessToken} if the login was successful.
+     * @throws Exception
+     *             if the login failed.
+     */
+    public abstract OAuth2AccessToken login(final String scopes) throws Exception;
+
+    /**
+     * Internal helper method to consistently handle an
+     * {@link OAuth2AccessTokenErrorResponse}.
+     *
+     * @param error
+     *            The {@link Exception} to handle.
+     * @return the wrapped exception with a nicer error message.
+     */
+    protected Exception wrapAccessTokenErrorResponse(final Exception error) {
+        if (error instanceof OAuth2AccessTokenErrorResponse) {
+            var tokenError = (OAuth2AccessTokenErrorResponse) error;
+            return createLoginFailedException(tokenError.getError().getErrorString(), //
+                    tokenError.getErrorDescription());
+        } else {
+            return error;
+        }
+    }
+
+    /**
+     * Internal helper method to consistently handle an OAuth error.
+     *
+     * @param error
+     *            The error code.
+     * @param errorDescription
+     *            The error description.
+     *
+     * @return the wrapped exception with a nicer error message.
+     */
+    protected Exception createLoginFailedException(final String error, final String errorDescription) {
+        return new IOException(String.format("Login failed (%s): %s", //
+                error, //
+                errorDescription));
     }
 }

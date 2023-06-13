@@ -65,7 +65,6 @@ import java.util.concurrent.TimeoutException;
 import org.knime.core.util.DesktopUtil;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.net.httpserver.HttpExchange;
@@ -73,15 +72,14 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * The class that performs interactive login. It opens the browser window and
- * setups listener for the redirect URL. After auth code is received it is
- * stored in the cache.
+ * Performs an interactive login using the OAuth2 authorization code flow. It
+ * opens a browser window and sets up a temporary local webserver to listen for
+ * the redirect by the OAuth provider.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class InteractiveLogin {
+public class AuthCodeFlow extends FlowBase {
 
-    private final OAuth20Service m_service;
     private final URI m_redirectUri;
     private String m_state;
     private CompletableFuture<String> m_authCodeFuture;
@@ -96,10 +94,9 @@ public class InteractiveLogin {
      * @param redirectUri
      *            The redirect URL.
      */
-    public InteractiveLogin(final OAuth20Service service, final URI redirectUri) {
-        m_service = service;
+    public AuthCodeFlow(final OAuth20Service service, final URI redirectUri) {
+        super(service);
         m_redirectUri = redirectUri;
-        // state parameter that associates authorization request with redirect response
     }
 
     /**
@@ -113,10 +110,13 @@ public class InteractiveLogin {
      * @throws Exception
      *             if the login failed for some reason.
      */
+    @SuppressWarnings("resource")
+    @Override
     public OAuth2AccessToken login(final String scopes) throws Exception {
+        // state parameter that associates authorization request with redirect response
         m_state = UUID.randomUUID().toString().replace("-", "");
 
-        final var authorizationUrl = m_service.createAuthorizationUrlBuilder()//
+        final var authorizationUrl = getService().createAuthorizationUrlBuilder()//
                 .scope(scopes)//
                 .state(m_state)//
                 .build();
@@ -140,13 +140,10 @@ public class InteractiveLogin {
         }
 
         try {
-            return m_service.getAccessToken(AccessTokenRequestParams.create(authCode).scope(scopes));
-        } catch (OAuth2AccessTokenErrorResponse e) {
-            throw new Exception(String.format("Login failed (%s): %s", //
-                    e.getError().getErrorString(), //
-                    e.getErrorDescription()), e);
+            return getService().getAccessToken(AccessTokenRequestParams.create(authCode).scope(scopes));
+        } catch (Exception e) {
+            throw wrapAccessTokenErrorResponse(e);
         }
-
     }
 
     private void setupListener(final URI redirectUrl) throws IOException {
@@ -186,7 +183,7 @@ public class InteractiveLogin {
 
             if (code != null) {
                 var state = extractField(exchange, "state");
-                if (!state.equals(m_state)) {
+                if (!m_state.equals(state)) {
                     throw new IOException(
                             "Failed to validate authorization server response (state mismatch)");
                 }
@@ -195,9 +192,7 @@ public class InteractiveLogin {
                 var errorDescription = Optional.ofNullable(extractField(exchange, "error_description"))
                         .orElse("not provided");
 
-                throw new IOException(String.format("Login failed (%s): %s", //
-                        error, //
-                        errorDescription));
+                throw createLoginFailedException(error, errorDescription);
             }
             return code;
         }

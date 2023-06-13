@@ -44,49 +44,37 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-12 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth.api.scribejava;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node factory for the OAuth2 Authenticator (Password) node.
+ * Performs a login using the OAuth2 client credentials flow.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-@SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
-
-    private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant flow.
-                    </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
-            """;
-
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
-            .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
-            .sinceVersion(5, 1, 0)//
-            .build();
+public class ClientCredentialsFlow extends FlowBase {
 
     /**
-     * Creates new instance.
+     * Creates a new instance.
+     *
+     * @param service
+     *            The {@link OAuth20Service} instance to use.
      */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
-        super(CONFIGURATION);
+    public ClientCredentialsFlow(final OAuth20Service service) {
+        super(service);
     }
 
+    @SuppressWarnings("resource")
     @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
+    public OAuth2AccessToken login(final String scopes) throws Exception {
+        try {
+            return getService().getAccessTokenClientCredentialsGrant(scopes);
+        } catch (Exception e) {
+            throw wrapAccessTokenErrorResponse(e);
+        }
     }
 }

@@ -61,8 +61,8 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.utils.Preconditions;
 
 /**
- * Client credentials service builder (allows to specify custom request body
- * fields).
+ * Custom {@link ServiceBuilderOAuth20} which allows to specify custom request
+ * body fields (for client credentials grant request).
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
@@ -178,7 +178,8 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
 
     /**
      * Adds an additional field to the application/x-www-form-urlencoded request
-     * body. Currently these fields are only used by the client credentials flow.
+     * body to the token endpoint. Currently these fields are only used by the
+     * client credentials flow.
      *
      * @param key
      *            The name of the field.
@@ -212,7 +213,7 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
      *            {@link CustomApi20} instance used to create the service instance.
      * @return a newly created service instance.
      */
-    public OAuth20Service build(final CustomApi20 api) {
+    public CustomOAuth20Service build(final CustomApi20 api) {
         return api.createService(m_apiKey, //
                 m_apiSecret, //
                 m_callback, //

@@ -49,15 +49,19 @@
 package org.knime.credentials.base.oauth2.password;
 
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
+import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
+
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * The node settings for the Generic OAuth Authenticator node.
+ * Node settings for the OAuth2 Authenticator (Password) node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public final class OAuth2AuthenticatorPasswordSettings extends OAuth2AuthenticatorSettingsBase {
+public final class OAuth2AuthenticatorPasswordSettings extends OAuth2AuthenticatorSettings {
 
     @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
     ClientType m_clientType = ClientType.PUBLIC;
@@ -70,4 +74,19 @@ public final class OAuth2AuthenticatorPasswordSettings extends OAuth2Authenticat
 
     @Widget(title = "Password", description = "The password to use.")
     String m_pwdGrantPassword;
+
+    @Override
+    public OAuth20Service createService() {
+        final var api = new CustomApi20(m_tokenUrl, //
+                "", //
+                toScribeVerb(m_tokenRequestMethod), //
+                toScribeClientAuthentication(m_clientAuthMechanism));
+
+        var builder = new ServiceBuilder(m_clientId);
+        if (m_clientType == ClientType.CONFIDENTIAL) {
+            builder.apiSecret(m_clientSecret);
+        }
+
+        return builder.build(api);
+    }
 }

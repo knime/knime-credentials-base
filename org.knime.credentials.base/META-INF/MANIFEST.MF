@@ -14,5 +14,6 @@ Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.knime.credentials.base.internal.CredentialsPlugin
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.credentials.base
-Export-Package: org.knime.credentials.base
+Export-Package: org.knime.credentials.base,
+ org.knime.credentials.base.node
 

@@ -66,13 +66,13 @@ import org.knime.credentials.base.CredentialTypeRegistry;
 import org.knime.credentials.base.NoOpCredentialSerializer;
 
 /**
- * Credential for simple string access token which are not JWTs.
+ * {@link Credential} implementation for simple string access tokens, which are
+ * not JWTs.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 public final class AccessTokenCredential implements Credential, HttpAuthorizationHeaderCredentialValue {
     /**
-     *
      * The serializer class
      */
     public static class Serializer extends NoOpCredentialSerializer<AccessTokenCredential> {

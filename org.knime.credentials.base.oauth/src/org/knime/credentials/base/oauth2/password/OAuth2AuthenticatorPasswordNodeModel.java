@@ -48,41 +48,26 @@
  */
 package org.knime.credentials.base.oauth2.password;
 
-import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeClientAuthentication;
-import static org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.toScribeVerb;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.lang3.StringUtils;
-import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeModel;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortObject;
-import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialType;
-import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase.ClientType;
+import org.knime.credentials.base.oauth.api.scribejava.PasswordFlow;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.ClientType;
 
-import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node model of the OAuth2 authenticator (Password) node. Performs OAuth
- * authentication using the ROPC grant and produces credential port object with
- * {@link JWTCredential}.
+ * Node model for the OAuth2 Authenticator (Password) node. Performs OAuth
+ * authentication using the ROPC grant.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2AuthenticatorPasswordSettings> {
+public class OAuth2AuthenticatorPasswordNodeModel
+        extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorPasswordSettings> {
 
     /**
      * @param configuration
@@ -93,17 +78,9 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-            final OAuth2AuthenticatorPasswordSettings modelSettings) throws InvalidSettingsException {
-        validate(modelSettings);
-        return new PortObjectSpec[] { createSpec(null) };
-    }
+    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorPasswordSettings settings)
+            throws InvalidSettingsException {
 
-    private static CredentialPortObjectSpec createSpec(final CredentialType credentialType) {
-        return new CredentialPortObjectSpec(credentialType);
-    }
-
-    private static void validate(final OAuth2AuthenticatorPasswordSettings settings) throws InvalidSettingsException {
         if (StringUtils.isEmpty(settings.m_tokenUrl)) {
             throw new InvalidSettingsException("Token endpoint URL is required");
         }
@@ -126,33 +103,12 @@ public class OAuth2AuthenticatorPasswordNodeModel extends WebUINodeModel<OAuth2A
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-            final OAuth2AuthenticatorPasswordSettings modelSettings) throws Exception {
-        var credential = fetchCredential(modelSettings);
-        var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
-    }
+    protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorPasswordSettings settings,
+            final OAuth20Service service) throws Exception {
 
-    private static Credential fetchCredential(final OAuth2AuthenticatorPasswordSettings settings)
-            throws IOException, InterruptedException, ExecutionException, ParseException {
-
-        var builder = new ServiceBuilder(settings.m_clientId);
-
-        if (settings.m_clientType == ClientType.CONFIDENTIAL) {
-            builder.apiSecret(settings.m_clientSecret);
-        }
-
-        final var api = new CustomApi20(settings.m_tokenUrl, //
-                "", //
-                toScribeVerb(settings.m_tokenRequestMethod), //
-                toScribeClientAuthentication(settings.m_clientAuthMechanism));
-
-        try (var service = builder.build(api)) {
-            var scribeJavaToken = service.getAccessTokenPasswordGrant(//
-                    settings.m_pwdGrantUsername, //
-                    settings.m_pwdGrantPassword, //
-                    settings.m_scopes);
-            return CredentialFactory.fromScribeToken(scribeJavaToken, () -> builder.build(api));
-        }
+        return new PasswordFlow(service, //
+                settings.m_pwdGrantUsername, //
+                settings.m_pwdGrantPassword)//
+                        .login(settings.m_scopes);
     }
 }

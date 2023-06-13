@@ -71,10 +71,8 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class JWTCredential implements Credential, HttpAuthorizationHeaderCredentialValue
-{
+public class JWTCredential implements Credential, HttpAuthorizationHeaderCredentialValue {
     /**
-     *
      * The serializer class
      */
     public static class Serializer extends NoOpCredentialSerializer<JWTCredential> {
@@ -98,10 +96,9 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
     private Function<String, JWTCredential> m_tokenRefresher;
 
     /**
-     * Default constructor for serialization
+     * Default constructor for ser(de).
      */
     public JWTCredential() {
-        // for serealization
     }
 
     /**
@@ -216,9 +213,10 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
                 final var refreshedCredential = m_tokenRefresher.apply(m_refreshToken.asString());
 
                 if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
-                    throw new IOException(String.format("Token type has changed during refresh. Was %s, but has become %s",//
-                            m_tokenType,//
-                            refreshedCredential.m_accessToken));
+                    throw new IOException(
+                            String.format("Token type has changed during refresh. Was %s, but has become %s", //
+                                    m_tokenType, //
+                                    refreshedCredential.m_accessToken));
                 }
 
                 m_accessToken = refreshedCredential.m_accessToken;

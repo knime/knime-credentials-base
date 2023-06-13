@@ -53,8 +53,7 @@ import org.knime.core.webui.node.impl.WebUINodeFactory;
 import org.knime.credentials.base.CredentialPortObject;
 
 /**
- * The node factory for the {@link OAuth2AuthenticatorAuthCodeNodeModel}
- * node.
+ * Node factory for the {@link OAuth2AuthenticatorAuthCodeNodeModel} node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */

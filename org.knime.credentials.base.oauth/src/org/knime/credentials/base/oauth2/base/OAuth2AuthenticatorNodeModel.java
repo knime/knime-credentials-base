@@ -44,49 +44,63 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-13 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth2.base;
 
+import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.port.PortObject;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.node.AuthenticatorNodeModel;
+import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
+
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node factory for the OAuth2 Authenticator (Password) node.
+ * Node model base class that implements common behavior for all OAuth2
+ * Authenticator nodes.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
+ * @param <T>
+ *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
-
-    private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant flow.
-                    </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
-            """;
-
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
-            .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
-            .sinceVersion(5, 1, 0)//
-            .build();
+public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
+        extends AuthenticatorNodeModel<T> {
 
     /**
-     * Creates new instance.
+     * Constructor.
+     *
+     * @param configuration
+     *            The {@link WebUINodeConfiguration} to use.
+     * @param settingsClass
+     *            The concrete settings class to use.
      */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
-        super(CONFIGURATION);
+    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
+        super(configuration, settingsClass);
     }
 
     @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
+    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
+            throws Exception {
+
+        try (var service = settings.createService()) {
+            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
+            return CredentialFactory.fromScribeToken(scribeJavaToken, settings::createService);
+        }
     }
+
+    /**
+     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
+     * using the scribejava library.
+     *
+     * @param settings
+     * @param service
+     * @return the scribejava {@link OAuth2AccessToken}
+     * @throws Exception
+     */
+    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
+            throws Exception;
 }

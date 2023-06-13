@@ -44,49 +44,51 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-12 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth.api.scribejava;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node factory for the OAuth2 Authenticator (Password) node.
+ * Performs a login with the OAuth2 resource owner password credentials (ROPC)
+ * flow.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-@SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
+public class PasswordFlow extends FlowBase {
 
-    private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant flow.
-                    </p>
-                    <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
-                    discouraged and the client credentials grant should be used instead.</p>
-            """;
+    private final String m_username;
 
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
-            .name("OAuth2 Authenticator (Password)")//
-            .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
-            .fullDescription(FULL_DESCRIPTION)
-            .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
-            .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//
-            .sinceVersion(5, 1, 0)//
-            .build();
+    private final String m_password;
 
     /**
-     * Creates new instance.
+     * Creates a new instance.
+     *
+     * @param service
+     *            The {@link OAuth20Service} instance to use.
+     * @param username
+     *            The username to use.
+     * @param password
+     *            The password to use.
      */
-    public OAuth2AuthenticatorPasswordNodeFactory() {
-        super(CONFIGURATION);
+    public PasswordFlow(final OAuth20Service service, final String username, final String password) {
+        super(service);
+        m_username = username;
+        m_password = password;
     }
 
+    @SuppressWarnings("resource")
     @Override
-    public OAuth2AuthenticatorPasswordNodeModel createNodeModel() {
-        return new OAuth2AuthenticatorPasswordNodeModel(CONFIGURATION);
+    public OAuth2AccessToken login(final String scopes) throws Exception {
+        try {
+            return getService().getAccessTokenPasswordGrant(//
+                    m_username, //
+                    m_password, //
+                    scopes);
+        } catch (Exception e) {
+            throw wrapAccessTokenErrorResponse(e);
+        }
     }
 }

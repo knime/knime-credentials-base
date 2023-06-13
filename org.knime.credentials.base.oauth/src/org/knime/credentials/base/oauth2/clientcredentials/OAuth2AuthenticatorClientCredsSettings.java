@@ -48,17 +48,23 @@
  */
 package org.knime.credentials.base.oauth2.clientcredentials;
 
+import java.util.Arrays;
+
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettingsBase;
+import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
+import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
+
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * The node settings for the Generic OAuth Authenticator node.
+ * The node settings for the OAuth2 Authenticator (Client Credentials) node.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettingsBase {
+final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettings {
 
     @Widget(title = "Secret", description = CLIENT_SECRET_DESCRIPTION)
     String m_clientSecret;
@@ -75,4 +81,19 @@ final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSe
             description = "Allows to add request body fields (key and value) to the token endpoint request.", //
             advanced = true)
     AdditionalRequestField[] m_additionalRequestFields = new AdditionalRequestField[0];
+
+    @Override
+    public OAuth20Service createService() {
+        final var api = new CustomApi20(m_tokenUrl, //
+                "", //
+                toScribeVerb(m_tokenRequestMethod), //
+                toScribeClientAuthentication(m_clientAuthMechanism));
+
+        var builder = new CustomOAuth2ServiceBuilder(m_clientId);
+        builder.apiSecret(m_clientSecret);
+        Arrays.stream(m_additionalRequestFields)//
+                .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
+
+        return builder.build(api);
+    }
 }
