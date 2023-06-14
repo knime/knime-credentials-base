@@ -61,9 +61,12 @@ import org.knime.credentials.base.CredentialPortObject;
 public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorPasswordNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/password/">resource
-                    owner password credentials (ROPC)</a> grant flow.
+                    <p>This node supports the <a href="https://oauth.net/2/grant-types/password/">OAuth 2.0 resource
+                    owner password credentials (ROPC)</a> grant flow. The target audience of this node are users with a
+                    technical understanding of OAuth 2 and (web) developers. For less technical users, it may be simpler
+                    to use service-specific nodes, such as Microsoft Authenticator or Google Authenticator.
                     </p>
+
                     <p>The ROPC grant is considered legacy and does not support 2FA/MFA. Usage of this grant is
                     discouraged and the client credentials grant should be used instead.</p>
             """;
@@ -71,7 +74,8 @@ public class OAuth2AuthenticatorPasswordNodeFactory extends WebUINodeFactory<OAu
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
             .name("OAuth2 Authenticator (Password)")//
             .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the resource owner password credentials (ROPC) grant.")//
+            .shortDescription(
+                    "Authenticator node that supports the OAuth 2.0 resource owner password credentials (ROPC) grant.")//
             .fullDescription(FULL_DESCRIPTION)
             .modelSettingsClass(OAuth2AuthenticatorPasswordSettings.class)//
             .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//

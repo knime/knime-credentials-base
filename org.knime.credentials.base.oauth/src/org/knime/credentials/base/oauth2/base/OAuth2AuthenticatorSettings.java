@@ -83,10 +83,10 @@ public abstract class OAuth2AuthenticatorSettings implements DefaultNodeSettings
             advanced = true)
     public HttpRequestMethod m_tokenRequestMethod = HttpRequestMethod.POST;
 
-    @Widget(title = "ID", description = "The client/application ID. In some services this is called API key.")
+    @Widget(title = "Client/App ID", description = "The client/application ID. In some services this is called API key.")
     public String m_clientId;
 
-    @Widget(title = "Authentication mechanism", //
+    @Widget(title = "Client/App authentication mechanism", //
             description = """
                     How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism,
                     but some services expect these values to be part of the form-encoded request body.

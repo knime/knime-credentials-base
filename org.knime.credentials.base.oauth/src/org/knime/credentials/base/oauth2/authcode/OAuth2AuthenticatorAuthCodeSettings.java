@@ -82,7 +82,7 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
     @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
     ClientType m_clientType = ClientType.PUBLIC;
 
-    @Widget(title = "Secret", description = CLIENT_SECRET_DESCRIPTION)
+    @Widget(title = "Client/App Secret", description = CLIENT_SECRET_DESCRIPTION)
     String m_clientSecret;
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """

@@ -61,10 +61,14 @@ import org.knime.credentials.base.CredentialPortObject;
 public class OAuth2AuthenticatorClientCredsNodeFactory extends WebUINodeFactory<OAuth2AuthenticatorClientCredsNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-                    <p>OAuth2 Authenticator that supports the <a href="https://oauth.net/2/grant-types/client-credentials/">client
-                    credentials</a> grant flow.
+                    <p>This node supports the <a href="https://oauth.net/2/grant-types/client-credentials/">client
+                    credentials</a> grant flow. The target audience of this node are users with a technical understanding of
+                    OAuth 2 and (web) developers. For less technical users, it may be simpler to use service-specific nodes,
+                    such as Microsoft Authenticator or Google Authenticator.
                     </p>
-                    <p>The client credentials grant is used to obtain an access token on behalf of an application/client,
+
+                    <p>
+                    The client credentials grant is used to obtain an access token on behalf of an application/client,
                     without having the context of a user.
                     </p>
             """;
@@ -72,7 +76,7 @@ public class OAuth2AuthenticatorClientCredsNodeFactory extends WebUINodeFactory<
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
             .name("OAuth2 Authenticator (Client Credentials)")//
             .icon("../base/oauth.png")//
-            .shortDescription("OAuth2 Authenticator that supports the client credentials grant.")//
+            .shortDescription("Authenticator that supports the OAuth 2.0 client credentials grant flow.")//
             .fullDescription(FULL_DESCRIPTION)
             .modelSettingsClass(OAuth2AuthenticatorClientCredsSettings.class)//
             .addOutputPort("Credential", CredentialPortObject.TYPE, "Credential with access token.")//

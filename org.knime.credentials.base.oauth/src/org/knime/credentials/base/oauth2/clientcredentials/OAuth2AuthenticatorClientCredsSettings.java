@@ -66,7 +66,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 @SuppressWarnings("restriction")
 final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettings {
 
-    @Widget(title = "Secret", description = CLIENT_SECRET_DESCRIPTION)
+    @Widget(title = "Client/App Secret", description = CLIENT_SECRET_DESCRIPTION)
     String m_clientSecret;
 
     static final class AdditionalRequestField implements DefaultNodeSettings {
