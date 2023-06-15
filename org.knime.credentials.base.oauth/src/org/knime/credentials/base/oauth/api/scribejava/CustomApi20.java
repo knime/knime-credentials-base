@@ -49,15 +49,20 @@
 package org.knime.credentials.base.oauth.api.scribejava;
 
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
+import com.github.scribejava.core.base64.Base64;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
+import com.github.scribejava.core.model.OAuthConstants;
+import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
+import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
 
 /**
  * {@link DefaultApi20} implementation that allows to configure several
@@ -88,7 +93,14 @@ public class CustomApi20 extends DefaultApi20 {
         m_tokenUrl = tokenUrl;
         m_authorizationUrl = authorizationUrl;
         m_requestMethod = requestMethod;
-        m_clientAuthentication = clientAuthentication;
+
+        if (clientAuthentication == HttpBasicAuthenticationScheme.instance()) {
+            // fixes a bug in HttpBasicAuthenticationScheme, see
+            // FixedHttpBasicAuthenticationScheme javadoc
+            m_clientAuthentication = FixedHttpBasicAuthenticationScheme.instance();
+        } else {
+            m_clientAuthentication = clientAuthentication;
+        }
     }
 
     @Override
@@ -161,5 +173,34 @@ public class CustomApi20 extends DefaultApi20 {
                 httpClientConfig, //
                 httpClient, //
                 additionalRequestBodyFields);
+    }
+
+    /**
+     * Fixes an issue in the scribejava HttpBasicAuthenticationScheme class, which
+     * is that the client_id is not put into the request body, if no apiSecret
+     * (client secret) is provided. RFC 6749 Section 4.1.3 mandates this:
+     * https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
+     */
+    private static class FixedHttpBasicAuthenticationScheme implements ClientAuthentication {
+
+        private static ClientAuthentication INSTANCE = new FixedHttpBasicAuthenticationScheme();
+
+        private FixedHttpBasicAuthenticationScheme() {
+        }
+
+        static ClientAuthentication instance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public void addClientAuthentication(final OAuthRequest request, final String apiKey, final String apiSecret) {
+            if (apiKey != null && apiSecret != null) {
+                request.addHeader(OAuthConstants.HEADER, //
+                        OAuthConstants.BASIC + ' ' + Base64
+                                .encode(String.format("%s:%s", apiKey, apiSecret).getBytes(Charset.forName("UTF-8"))));
+            } else if (apiKey != null && apiSecret == null) {
+                request.addParameter(OAuthConstants.CLIENT_ID, apiKey);
+            }
+        }
     }
 }
