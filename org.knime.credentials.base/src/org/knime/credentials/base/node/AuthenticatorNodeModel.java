@@ -48,9 +48,13 @@
  */
 package org.knime.credentials.base.node;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 
+import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
@@ -174,10 +178,22 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
             throws Exception;
 
     @Override
-    protected void onDispose() {
+    protected final void onDispose() {
+        onReset();
+    }
+
+    @Override
+    protected void onReset() {
         if (m_credentialCacheKey != null) {
             CredentialCache.delete(m_credentialCacheKey);
             m_credentialCacheKey = null;
         }
+    }
+
+    @Override
+    protected void onLoadInternals(final File nodeInternDir, final ExecutionMonitor exec)
+            throws IOException, CanceledExecutionException {
+
+        setWarningMessage("Credential not available anymore. Please re-execute this node.");
     }
 }
