@@ -152,6 +152,7 @@ public class GenericOAuthAuthenticatorNodeModel extends WebUINodeModel<GenericOA
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
             final GenericOAuthAuthenticatorSettings modelSettings) throws Exception {
+        System.out.println(getCredentialsProvider().get(modelSettings.m_credentialsColumn).getPassword());
         var credential = fetchCredential(modelSettings);
         var uuid = CredentialCache.store(credential);
         return new PortObject[] { new CredentialPortObject(createSpec(), uuid) };

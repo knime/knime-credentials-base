@@ -48,7 +48,11 @@
  */
 package org.knime.credentials.base.oauth.node.generic;
 
+import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 
 /**
@@ -99,6 +103,11 @@ public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
     @Widget(title = "Scopes", description = "The list of scopes separated by the whitespace or new line.")
     String m_scopes;
 
+    @Widget(title = "Credentials", description = "")
+    @ChoicesWidget(choices = CredentialsProvider.class, showNoneColumn = true)
+    @Persist(optional = true)
+    public String m_credentialsColumn = "";
+
     enum ServiceType {
         STANDARD, CUSTOM;
     }
@@ -117,5 +126,23 @@ public class GenericOAuthAuthenticatorSettings implements DefaultNodeSettings {
 
     enum GrantType {
         AUTH_CODE, CLIENT_CREDENTIALS, PASSWORD, IMPLICIT;
+    }
+
+    /**
+     * A {@link ChoicesProvider} yielding those columns in the given input table
+     * spec which have a color handler appended.
+     *
+     * @author Daniel Bogenrieder
+     */
+    public static final class CredentialsProvider implements ChoicesProvider {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String[] choices(final SettingsCreationContext context) {
+            return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE).keySet().toArray(String[]::new);
+        }
+
     }
 }
