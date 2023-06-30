@@ -163,7 +163,7 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
                     m_refreshToken = refreshedCredential.m_refreshToken;
                 }
 
-            } catch (UncheckedIOException e) {
+            } catch (UncheckedIOException e) { // NOSONAR just a wrapper
                 throw e.getCause();
             }
         }

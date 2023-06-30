@@ -98,7 +98,7 @@ public final class CredentialType {
     /**
      * @return the class used to (de)serialize instances of this credential type.
      */
-    public CredentialSerializer<?> getCredentialSerializer() {
+    public CredentialSerializer<?> getCredentialSerializer() { // NOSONAR
         return m_credentialSerializer;
     }
 }

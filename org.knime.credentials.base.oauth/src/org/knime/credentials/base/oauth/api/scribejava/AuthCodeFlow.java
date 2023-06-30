@@ -65,6 +65,7 @@ import java.util.concurrent.TimeoutException;
 import org.knime.core.util.DesktopUtil;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.net.httpserver.HttpExchange;
@@ -129,19 +130,19 @@ public class AuthCodeFlow extends FlowBase {
         try {
             DesktopUtil.browse(new URL(authorizationUrl));
             authCode = m_authCodeFuture.get(1, TimeUnit.MINUTES);
-        } catch (ExecutionException e) {
+        } catch (ExecutionException e) { // NOSONAR this is just a wrapper
             throw (Exception) e.getCause();
-        } catch (TimeoutException e) {
-            throw new Exception("Login timed out");
-        } catch (InterruptedException | CancellationException e) {
-            throw new Exception("Login was interrupted/canceled");
+        } catch (TimeoutException e) { // NOSONAR
+            throw new Exception("Login timed out"); // NOSONAR
+        } catch (InterruptedException | CancellationException e) {// NOSONAR
+            throw new Exception("Login was interrupted/canceled");// NOSONAR
         } finally {
             stopListener();
         }
 
         try {
             return getService().getAccessToken(AccessTokenRequestParams.create(authCode).scope(scopes));
-        } catch (Exception e) {
+        } catch (OAuth2AccessTokenErrorResponse e) {
             throw wrapAccessTokenErrorResponse(e);
         }
     }
@@ -162,8 +163,18 @@ public class AuthCodeFlow extends FlowBase {
     }
 
     private class AuthCodeHandler implements HttpHandler {
-        private final String SUCCESS_MESSAGE = "<html><head><title>Authentication complete</title></head><body>Authentication complete. You can close the browser.</body></html>";
-        private final String ERROR_MESSAGE_FORMAT = "<html><head><title>Authentication failed</title></head><body>Authentication failed. You may close the browser. Error details: <br> %s</body></html>";
+        private static final String SUCCESS_MESSAGE = """
+                <html>
+                    <head><title>Authentication complete</title></head>
+                    <body>Authentication complete. You can close the browser.</body>
+                </html>
+                """;
+        private static final String ERROR_MESSAGE_FORMAT = """
+                <html>
+                    <head><title>Authentication failed</title></head>
+                    <body>Authentication failed. You may close the browser. Error details: <br> %s</body>
+                </html>
+                """;
 
         @Override
         public void handle(final HttpExchange exchange) throws IOException {
@@ -171,14 +182,14 @@ public class AuthCodeFlow extends FlowBase {
                 var code = extractCode(exchange);
                 sendResponse(exchange, SUCCESS_MESSAGE);
                 m_authCodeFuture.complete(code);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 sendResponse(exchange, String.format(ERROR_MESSAGE_FORMAT, //
                         e.getMessage()));
                 m_authCodeFuture.completeExceptionally(e);
             }
         }
 
-        private String extractCode(final HttpExchange exchange) throws Exception {
+        private String extractCode(final HttpExchange exchange) throws IOException {
             var code = extractField(exchange, "code");
 
             if (code != null) {
@@ -198,27 +209,25 @@ public class AuthCodeFlow extends FlowBase {
         }
 
         private String extractField(final HttpExchange exchange, final String field) {
-            String fieldValue = null;
+
             final var query = exchange.getRequestURI().getQuery();
             if (query != null) {
                 for (var param : query.split("&")) {
                     final var keyValue = param.split("=");
-                    if (keyValue.length == 2) {
-                        if (field.equalsIgnoreCase(keyValue[0])) {
-                            return URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
-                        }
+                    if (keyValue.length == 2 && field.equalsIgnoreCase(keyValue[0])) {
+                        return URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
                     }
                 }
             }
 
-            return fieldValue;
+            return null;
         }
 
         private void sendResponse(final HttpExchange httpExchange, final String response) {
             try {
                 httpExchange.sendResponseHeaders(200, response.length());
                 try (var os = httpExchange.getResponseBody()) {
-                    os.write(response.getBytes());
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
                 }
             } catch (IOException e) { // NOSONAR
                 // do nothing, browser may have already closed connection

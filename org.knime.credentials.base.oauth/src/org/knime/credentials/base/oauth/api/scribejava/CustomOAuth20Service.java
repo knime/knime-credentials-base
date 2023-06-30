@@ -69,7 +69,7 @@ class CustomOAuth20Service extends OAuth20Service {
 
     private Map<String, String> m_additionalRequestBodyFields = new HashMap<>();
 
-    CustomOAuth20Service(final DefaultApi20 api, //
+    CustomOAuth20Service(final DefaultApi20 api, // NOSONAR
             final String apiKey, //
             final String apiSecret, //
             final String callback, //
@@ -89,7 +89,7 @@ class CustomOAuth20Service extends OAuth20Service {
     @Override
     protected OAuthRequest createAccessTokenClientCredentialsGrantRequest(final String scope) {
 
-        final OAuthRequest request = new OAuthRequest(getApi().getAccessTokenVerb(), //
+        final var request = new OAuthRequest(getApi().getAccessTokenVerb(), //
                 getApi().getAccessTokenEndpoint());
 
         getApi().getClientAuthentication().addClientAuthentication(request, getApiKey(), getApiSecret());

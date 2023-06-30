@@ -92,33 +92,27 @@ abstract class FlowBase {
      * @throws Exception
      *             if the login failed.
      */
-    public abstract OAuth2AccessToken login(final String scopes) throws Exception;
+    public abstract OAuth2AccessToken login(final String scopes) throws Exception; // NOSONAR
 
     /**
      * Internal helper method to consistently handle an
      * {@link OAuth2AccessTokenErrorResponse}.
      *
-     * @param error
-     *            The {@link Exception} to handle.
+     * @param tokenError
+     *            The {@link OAuth2AccessTokenErrorResponse} to handle.
      * @return the wrapped exception with a nicer error message.
      */
     @SuppressWarnings("resource")
-    protected Exception wrapAccessTokenErrorResponse(final Exception error) {
-        if (error instanceof OAuth2AccessTokenErrorResponse) {
-            var tokenError = (OAuth2AccessTokenErrorResponse) error;
+    protected Exception wrapAccessTokenErrorResponse(final OAuth2AccessTokenErrorResponse tokenError) {
 
-            var oauth2Error = tokenError.getError();
-            if (oauth2Error != null) {
-                return createLoginFailedException(oauth2Error.getErrorString(), tokenError.getErrorDescription());
-            } else {
-                var response = tokenError.getResponse();
-                return new IOException(String.format("Could not retrieve access token (HTTP %d - %s)", //
-                        response.getCode(), //
-                        Optional.ofNullable(response.getMessage()).orElse("no message provided")));
-            }
-
+        var oauth2Error = tokenError.getError();
+        if (oauth2Error != null) {
+            return createLoginFailedException(oauth2Error.getErrorString(), tokenError.getErrorDescription());
         } else {
-            return error;
+            var response = tokenError.getResponse();
+            return new IOException(String.format("Could not retrieve access token (HTTP %d - %s)", //
+                    response.getCode(), //
+                    Optional.ofNullable(response.getMessage()).orElse("no message provided")));
         }
     }
 
@@ -132,7 +126,7 @@ abstract class FlowBase {
      *
      * @return the wrapped exception with a nicer error message.
      */
-    protected Exception createLoginFailedException(final String error, final String errorDescription) {
+    protected IOException createLoginFailedException(final String error, final String errorDescription) {
         return new IOException(String.format("Could not retrieve access token (%s - %s", //
                 error, //
                 Optional.ofNullable(errorDescription).orElse("no message provided")));

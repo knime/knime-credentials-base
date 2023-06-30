@@ -49,6 +49,7 @@
 package org.knime.credentials.base.oauth.api.scribejava;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
@@ -87,7 +88,7 @@ public class PasswordFlow extends FlowBase {
                     m_username, //
                     m_password, //
                     scopes);
-        } catch (Exception e) {
+        } catch (OAuth2AccessTokenErrorResponse e) {
             throw wrapAccessTokenErrorResponse(e);
         }
     }

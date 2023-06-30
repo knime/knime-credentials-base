@@ -48,8 +48,8 @@
  */
 package org.knime.credentials.base.oauth2.clientcredentials;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
@@ -65,7 +65,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorClientCredsNodeModel
+class OAuth2AuthenticatorClientCredsNodeModel
         extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorClientCredsSettings> {
 
     /**
@@ -77,24 +77,33 @@ public class OAuth2AuthenticatorClientCredsNodeModel
     }
 
     @Override
-    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorClientCredsSettings settings)
-            throws InvalidSettingsException {
-        if (StringUtils.isEmpty(settings.m_tokenUrl)) {
-            throw new InvalidSettingsException("Token endpoint URL is required");
-        }
+    protected void validateOnConfigure(final PortObjectSpec[] inSpecs,
+            final OAuth2AuthenticatorClientCredsSettings settings) throws InvalidSettingsException {
 
-        if (StringUtils.isEmpty(settings.m_clientId)) {
-            throw new InvalidSettingsException("Client/App ID is required");
-        }
+        settings.m_service.validate();
+        settings.m_app.validateOnConfigure(getCredentialsProvider());
+        settings.m_scopes.validate();
 
-        if (StringUtils.isEmpty(settings.m_clientSecret)) {
-            throw new InvalidSettingsException("Client/App secret is required");
+        if (settings.m_additionalRequestFields != null) {
+            for (var additionalRequestField : settings.m_additionalRequestFields) {
+                additionalRequestField.validate();
+            }
         }
+    }
+
+    @Override
+    protected void validateOnExecute(final PortObject[] inObjects,
+            final OAuth2AuthenticatorClientCredsSettings settings) throws InvalidSettingsException {
+
+        // additional validation step to ensure that credentials flow variable is
+        // present (this was not done during configure())
+        settings.m_app.validateOnExecute(getCredentialsProvider());
     }
 
     @Override
     protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorClientCredsSettings settings,
             final OAuth20Service service) throws Exception {
-        return new ClientCredentialsFlow(service).login(settings.m_scopes);
+
+        return new ClientCredentialsFlow(service).login(settings.m_scopes.toScopeString());
     }
 }

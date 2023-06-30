@@ -95,7 +95,7 @@ class PortViewFactories {
 
     private static String createHtmlContent(final CredentialPortObject portObject) {
         final var sb = new StringBuilder();
-        sb.append("<html><table>");
+        sb.append("<html><body><table>");
 
         portObject.getCredential(Credential.class).ifPresent(cred -> {
             for (String[] kv : cred.describe()) {
@@ -107,7 +107,7 @@ class PortViewFactories {
             }
         });
 
-        sb.append("</table></html>");
+        sb.append("</table></body></html>");
         return sb.toString();
     }
 

@@ -44,78 +44,75 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-13 (Alexander Bondaletov, Redfield SE): created
+ *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.password;
+package org.knime.credentials.base.oauth2.base;
 
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.node.UsernamePasswordSettings;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
-import org.knime.credentials.base.oauth2.base.PublicAppSettings;
-import org.knime.credentials.base.oauth2.base.ScopeSettings;
+import org.knime.credentials.base.node.CredentialsSettings;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
 import org.knime.credentials.base.oauth2.base.Sections.AppSection;
-import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
-import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
-
-import com.github.scribejava.core.builder.ServiceBuilder;
-import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node settings for the OAuth2 Authenticator (Password) node.
+ * Implementation of {@link CredentialsSettings} to supply the ID and secret of
+ * a confidential OAuth2 app.
  *
- * @author Alexander Bondaletov, Redfield SE
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSettings {
+public class ConfidentialAppSettings implements CredentialsSettings {
 
-    @Section(title = "Username and Password")
-    @After(AppSection.class)
-    @Before(ScopesSection.class)
-    interface UsernamePasswordSection {
-    }
-
-    @Hidden
-    @Persist(hidden = true, optional = true)
-    @Signal(condition = IsStandardService.class)
-    ServiceType m_hiddenServiceType = ServiceType.CUSTOM;
-
-    TokenEndpointSettings m_service = new TokenEndpointSettings();
-
-    @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
-    @ValueSwitchWidget
-    @Layout(AppSection.TypeChooser.class)
-    @Signal(condition = IsPublicApp.class)
-    AppType m_appType = AppType.PUBLIC;
-
-    PublicAppSettings m_publicApp = new PublicAppSettings();
-
-    ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
-
-    @Layout(UsernamePasswordSection.class)
-    UsernamePasswordSettings m_usernamePassword = new UsernamePasswordSettings();
-
-    ScopeSettings m_scopes = new ScopeSettings();
+    /**
+     * The name of the Credentials flow variable.
+     */
+    @Layout(AppSection.Confidential.class)
+    @Widget(title = "Client/App ID and secret (flow variable)", //
+            description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
+    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
+    @Effect(signals = IsPublicApp.class, type = EffectType.HIDE)
+    public String m_flowVariable;
 
     @Override
-    public OAuth20Service createService(final CredentialsProvider credsProvider) {
-        final var api = m_service.createApi();
+    public String flowVariableName() {
+        return m_flowVariable;
+    }
 
-        if (m_appType == AppType.PUBLIC) {
-            return new ServiceBuilder(m_publicApp.m_appId).build(api);
-        } else {
-            return new ServiceBuilder(m_confidentialApp.login(credsProvider))//
-                    .apiSecret(m_confidentialApp.secret(credsProvider))//
-                    .build(api);
+    /**
+     * If a flow variable has been specified, this method validates that a username
+     * and password are present in the flow variable. This method should be used
+     * during the configure phase, to reduce logspam if the credentials flow
+     * variable is not there yet.
+     *
+     * @param credsProvider
+     *            Used to access the flow variable.
+     * @throws InvalidSettingsException
+     *             when username or password was not present in the flow variable.
+     */
+    public void validateOnConfigure(final CredentialsProvider credsProvider) throws InvalidSettingsException {
+        if (retrieve(credsProvider).isPresent()) {
+            validateLogin(credsProvider, "Client/App ID is required");
+            validateSecret(credsProvider, "Client/App secret is required");
         }
+    }
+
+    /**
+     * This method validates both presence and validity of a credentials flow
+     * variable. This method should be used during the execute phase.
+     *
+     * @param credsProvider
+     *            Used to access the flow variable.
+     * @throws InvalidSettingsException
+     *             when flow variable was not present or invalid.
+     */
+    public void validateOnExecute(final CredentialsProvider credsProvider) throws InvalidSettingsException {
+        validateFlowVariable(credsProvider);
+        validateLogin(credsProvider, "Client/App ID is required");
+        validateSecret(credsProvider, "Client/App secret is required");
     }
 }

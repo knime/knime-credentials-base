@@ -49,11 +49,36 @@
 package org.knime.credentials.base.oauth2.authcode;
 
 import java.net.URI;
+import java.util.UUID;
+import java.util.concurrent.Future;
 
+import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.KNIMEConstants;
+import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.DialogDataServiceHandlerResult;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
+import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
-import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
+import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
+import org.knime.credentials.base.oauth2.base.PublicAppSettings;
+import org.knime.credentials.base.oauth2.base.ScopeSettings;
+import org.knime.credentials.base.oauth2.base.Sections.AppSection;
+import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
+import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -66,38 +91,94 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSettings {
+class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings {
+
+    private static final NodeLogger LOG = NodeLogger.getLogger(OAuth2AuthenticatorAuthCodeSettings.class);
 
     @Widget(title = "Service type", description = """
             Whether to connect to a standard OAuth service from a predefined list, or
             to manually specify endpoint URLs.""")
+    @Layout(ServiceSection.TypeChooser.class)
+    @ValueSwitchWidget
+    @Signal(condition = IsStandardService.class)
     ServiceType m_serviceType = ServiceType.STANDARD;
 
     @Widget(title = "Service", description = "A standard OAuth service from a predefined list.")
+    @Layout(ServiceSection.Standard.class)
+    @Effect(signals = IsStandardService.class, type = EffectType.SHOW)
     StandardService m_standardService;
 
-    @Widget(title = "Authorization endpoint URL", description = "The authorization endpoint URL of the OAuth service.")
-    String m_authorizationUrl;
+    CustomServiceSettings m_customService = new CustomServiceSettings();
 
     @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
-    ClientType m_clientType = ClientType.PUBLIC;
+    @Layout(AppSection.TypeChooser.class)
+    @ValueSwitchWidget
+    @Signal(condition = IsPublicApp.class)
+    AppType m_appType = AppType.PUBLIC;
 
-    @Widget(title = "Client/App Secret", description = CLIENT_SECRET_DESCRIPTION)
-    String m_clientSecret;
+    PublicAppSettings m_publicApp = new PublicAppSettings();
+
+    ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
             The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX
             with a random number in the 10000 - 65000 range to avoid conflicts. Often, the redirect URL is part of the
             client/app registration at the OAuth2 service.
             """)
+    @Layout(AppSection.Bottom.class)
     String m_redirectUrl = "http://localhost:43769";
 
-    enum ServiceType {
-        STANDARD, CUSTOM;
+    @ButtonWidget(invokeButtonText = "Login", //
+            cancelButtonText = "Cancel login", //
+            succeededButtonText = "Login again", //
+            actionHandler = LoginActionHandler.class, //
+            isMultipleUse = true, //
+            showTitleAndDescription = false)
+    @Widget(title = "Login", //
+            description = "Clicking on login opens a new browser window/tab which "
+            + "allows to interactively log into the service.")
+    @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
+    @Layout(AppSection.Bottom.class)
+    UUID m_tokenCacheKey;
+
+    @Layout(ScopesSection.class)
+    ScopeSettings m_scopes = new ScopeSettings();
+
+    OAuth2AuthenticatorAuthCodeSettings() {
     }
 
     enum GrantType {
         AUTH_CODE, IMPLICIT;
+    }
+
+    static class LoginActionHandler extends CancelableActionHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
+
+        @Override
+        protected Future<DialogDataServiceHandlerResult<UUID>> invoke(
+                final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context) {
+
+            return KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> doDialogLogin(settings, context));
+        }
+
+        private static DialogDataServiceHandlerResult<UUID> doDialogLogin(
+                final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context) {
+
+            try {
+                settings.validate(context.getCredentialsProvider().orElseThrow());
+            } catch (InvalidSettingsException e) { // NOSONAR
+                return DialogDataServiceHandlerResult.fail(e.getMessage());
+            }
+
+            try {
+                var tokenHolder = new OAuth2AccessTokenHolder();
+                tokenHolder.m_token = fetchAccessToken(settings, context);
+                tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
+                return DialogDataServiceHandlerResult.succeed(tokenHolder.m_cacheKey);
+            } catch (Exception e) {
+                LOG.debug("Interactive login failed: " + e.getMessage(), e);
+                return DialogDataServiceHandlerResult.fail(e.getMessage());
+            }
+        }
     }
 
     /**
@@ -106,41 +187,82 @@ public class OAuth2AuthenticatorAuthCodeSettings extends OAuth2AuthenticatorSett
      *
      * @param settings
      *            The node settings.
+     * @param context
      * @return the {@link OAuth2AccessToken} if the login was successful.
      * @throws Exception
      *             if the login failed for some reason.
      */
-    static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings) throws Exception {
-        try (var service = settings.createService()) {
+    static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
+            final SettingsCreationContext context) throws Exception {
+
+        try (var service = settings.createService(context.getCredentialsProvider().orElseThrow())) {
             return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
-                    .login(settings.m_scopes);
+                    .login(settings.m_scopes.toScopeString());
         }
     }
 
-    /**
-     * Creates {@link OAuth20Service} from the current settings.
-     *
-     * @return The {@link OAuth20Service} instance.
-     */
     @Override
-    public OAuth20Service createService() {
+    public OAuth20Service createService(final CredentialsProvider credsProvider) {
         final DefaultApi20 api;
 
         if (m_serviceType == ServiceType.CUSTOM) {
-            api = new CustomApi20(m_tokenUrl, //
-                    m_authorizationUrl, //
-                    toScribeVerb(m_tokenRequestMethod), //
-                    toScribeClientAuthentication(m_clientAuthMechanism));
+            api = m_customService.createApi();
         } else {
             api = m_standardService.getApi();
         }
 
-        var builder = new ServiceBuilder(m_clientId);
-        builder.callback(m_redirectUrl);
-        if (m_clientType == ClientType.CONFIDENTIAL) {
-            builder.apiSecret(m_clientSecret);
+
+        final ServiceBuilder builder;
+        if (m_appType == AppType.PUBLIC) {
+            builder = new ServiceBuilder(m_publicApp.m_appId);
+        } else {
+            builder = new ServiceBuilder(m_confidentialApp.login(credsProvider))//
+                    .apiSecret(m_confidentialApp.secret(credsProvider));
         }
 
+        builder.callback(m_redirectUrl);
+
         return builder.build(api);
+    }
+
+    private static class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<UUID> {
+
+        @Override
+        public UUID load(final NodeSettingsRO settings) throws InvalidSettingsException {
+            if (settings.containsKey(getConfigKey())) {
+                var uuidStr = settings.getString(getConfigKey());
+                if (!StringUtils.isBlank(uuidStr)) {
+                    final var uuid = UUID.fromString(uuidStr);
+                    if (CredentialCache.get(uuid).isPresent()) {
+                        return uuid;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public void save(final UUID uuid, final NodeSettingsWO settings) {
+            if (uuid != null) {
+                settings.addString(getConfigKey(), uuid.toString());
+            }
+        }
+    }
+
+    void validate(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        if (m_serviceType == ServiceType.CUSTOM) {
+            m_customService.validate();
+        } else if (m_standardService == null) {
+            throw new InvalidSettingsException("No service is selected");
+        }
+
+        if (m_appType == AppType.CONFIDENTIAL) {
+            m_confidentialApp.validateOnExecute(credentialsProvider);
+        } else {
+            m_publicApp.validate();
+        }
+
+        m_scopes.validate();
     }
 }

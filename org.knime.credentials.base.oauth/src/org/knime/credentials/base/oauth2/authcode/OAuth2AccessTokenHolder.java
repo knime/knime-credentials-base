@@ -44,64 +44,39 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-13 (bjoern): created
+ *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.oauth2.authcode;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import java.util.UUID;
+
 import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.node.AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
+import org.knime.credentials.base.CredentialCache;
+import org.knime.credentials.base.CredentialType;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node model base class that implements common behavior for all OAuth2
- * Authenticator nodes.
+ * Dummy credential that can hold a scribejava {@link OAuth2AccessToken}. The
+ * sole purpose of this class is to pass a {@link OAuth2AccessToken} created in
+ * the OAuth2 Authenticator node dialog to the node model, using the
+ * {@link CredentialCache}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The concrete settings class to use.
  */
-@SuppressWarnings("restriction")
-public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
-        extends AuthenticatorNodeModel<T> {
+final class OAuth2AccessTokenHolder implements Credential {
 
-    /**
-     * Constructor.
-     *
-     * @param configuration
-     *            The {@link WebUINodeConfiguration} to use.
-     * @param settingsClass
-     *            The concrete settings class to use.
-     */
-    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
-        super(configuration, settingsClass);
+    UUID m_cacheKey;
+
+    OAuth2AccessToken m_token;
+
+    @Override
+    public CredentialType getType() {
+        return null;
     }
 
     @Override
-    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
-            throws Exception {
-
-        try (var service = settings.createService(getCredentialsProvider())) {
-            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
-            return CredentialFactory.fromScribeToken(scribeJavaToken,
-                    () -> settings.createService(getCredentialsProvider()));
-        }
+    public String[][] describe() {
+        return new String[][] {};
     }
-
-    /**
-     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
-     * using the scribejava library.
-     *
-     * @param settings
-     * @param service
-     * @return the scribejava {@link OAuth2AccessToken}
-     * @throws Exception
-     */
-    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
-            throws Exception; // NOSONAR
 }

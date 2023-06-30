@@ -49,7 +49,6 @@
 package org.knime.credentials.base.oauth.api.scribejava;
 
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
@@ -63,6 +62,7 @@ import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
 import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
+import com.nimbusds.jose.util.StandardCharset;
 
 /**
  * {@link DefaultApi20} implementation that allows to configure several
@@ -157,7 +157,7 @@ public class CustomApi20 extends DefaultApi20 {
      * @param additionalRequestBodyFields
      * @return a new {@link OAuth20Service} instance
      */
-    public CustomOAuth20Service createService(final String apiKey, final String apiSecret, final String callback,
+    public CustomOAuth20Service createService(final String apiKey, final String apiSecret, final String callback, // NOSONAR
             final String defaultScope, final String responseType, final OutputStream debugStream,
             final String userAgent, final HttpClientConfig httpClientConfig, final HttpClient httpClient,
             final Map<String, String> additionalRequestBodyFields) {
@@ -181,9 +181,9 @@ public class CustomApi20 extends DefaultApi20 {
      * (client secret) is provided. RFC 6749 Section 4.1.3 mandates this:
      * https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
      */
-    private static class FixedHttpBasicAuthenticationScheme implements ClientAuthentication {
+    private static final class FixedHttpBasicAuthenticationScheme implements ClientAuthentication {
 
-        private static ClientAuthentication INSTANCE = new FixedHttpBasicAuthenticationScheme();
+        private static final ClientAuthentication INSTANCE = new FixedHttpBasicAuthenticationScheme();
 
         private FixedHttpBasicAuthenticationScheme() {
         }
@@ -197,8 +197,8 @@ public class CustomApi20 extends DefaultApi20 {
             if (apiKey != null && apiSecret != null) {
                 request.addHeader(OAuthConstants.HEADER, //
                         OAuthConstants.BASIC + ' ' + Base64
-                                .encode(String.format("%s:%s", apiKey, apiSecret).getBytes(Charset.forName("UTF-8"))));
-            } else if (apiKey != null && apiSecret == null) {
+                                .encode(String.format("%s:%s", apiKey, apiSecret).getBytes(StandardCharset.UTF_8)));
+            } else if (apiKey != null) {
                 request.addParameter(OAuthConstants.CLIENT_ID, apiKey);
             }
         }

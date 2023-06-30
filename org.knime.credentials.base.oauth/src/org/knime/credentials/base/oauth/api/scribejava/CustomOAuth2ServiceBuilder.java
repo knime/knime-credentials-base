@@ -85,7 +85,7 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
      * @param apiKey
      */
     public CustomOAuth2ServiceBuilder(final String apiKey) {
-        apiKey(apiKey);
+        apiKey(apiKey); // NOSONAR
     }
 
     @Override
@@ -173,7 +173,7 @@ public class CustomOAuth2ServiceBuilder implements ServiceBuilderOAuth20 {
 
     @Override
     public CustomOAuth2ServiceBuilder debug() {
-        return debugStream(System.out);
+        return debugStream(System.out); // NOSONAR
     }
 
     /**

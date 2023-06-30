@@ -44,64 +44,67 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-13 (bjoern): created
+ *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.node;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.node.AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 
 /**
- * Node model base class that implements common behavior for all OAuth2
- * Authenticator nodes.
+ * Implementation of {@link CredentialsSettings} to supply the a username and
+ * password.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
-        extends AuthenticatorNodeModel<T> {
+public class UsernamePasswordSettings implements CredentialsSettings {
 
     /**
-     * Constructor.
-     *
-     * @param configuration
-     *            The {@link WebUINodeConfiguration} to use.
-     * @param settingsClass
-     *            The concrete settings class to use.
+     * The name of the Credentials flow variable.
      */
-    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
-        super(configuration, settingsClass);
-    }
+    @Widget(title = "Username/Password (flow variable)", //
+            description = "Specifies the credentials flow variable with the username and password to use.")
+    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
+    public String m_flowVariable;
 
     @Override
-    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
-            throws Exception {
+    public String flowVariableName() {
+        return m_flowVariable;
+    }
 
-        try (var service = settings.createService(getCredentialsProvider())) {
-            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
-            return CredentialFactory.fromScribeToken(scribeJavaToken,
-                    () -> settings.createService(getCredentialsProvider()));
+    /**
+     * If a flow variable has been specified, this method validates that a username
+     * and password are present in the flow variable. This method should be used
+     * during the configure phase, to reduce logspam if the credentials flow
+     * variable is not there yet.
+     *
+     * @param credsProvider
+     *            Used to access the flow variable.
+     * @throws InvalidSettingsException
+     *             when username or password was not present in the flow variable.
+     */
+    public void validateOnConfigure(final CredentialsProvider credsProvider) throws InvalidSettingsException {
+        if (retrieve(credsProvider).isPresent()) {
+            validateLogin(credsProvider, "Username is required");
+            validateSecret(credsProvider, "Password is required");
         }
     }
 
     /**
-     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
-     * using the scribejava library.
+     * This method validates both presence and validity of a credentials flow
+     * variable. This method should be used during the execute phase.
      *
-     * @param settings
-     * @param service
-     * @return the scribejava {@link OAuth2AccessToken}
-     * @throws Exception
+     * @param credsProvider
+     *            Used to access the flow variable.
+     * @throws InvalidSettingsException
+     *             when flow variable was not present or invalid.
      */
-    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
-            throws Exception; // NOSONAR
+    public void validateOnExecute(final CredentialsProvider credsProvider) throws InvalidSettingsException {
+        validateFlowVariable(credsProvider);
+        validateLogin(credsProvider, "Username is required");
+        validateSecret(credsProvider, "Password is required");
+    }
 }

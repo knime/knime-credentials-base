@@ -226,7 +226,7 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
                 if (refreshedCredential.m_refreshToken != null) {
                     m_refreshToken = refreshedCredential.m_refreshToken;
                 }
-            } catch (UncheckedIOException e) {
+            } catch (UncheckedIOException e) { // NOSONAR this is just a wrapper
                 throw e.getCause();
             }
         }

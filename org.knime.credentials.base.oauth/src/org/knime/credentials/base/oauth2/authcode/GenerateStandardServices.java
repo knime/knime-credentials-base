@@ -48,24 +48,21 @@
  */
 package org.knime.credentials.base.oauth2.authcode;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.scribejava.apis.AWeberApi;
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.nimbusds.jose.util.StandardCharset;
 
 /**
  * The class generates enum containing all of the supported OAuth 2.0 services
@@ -80,7 +77,7 @@ import com.github.scribejava.core.builder.api.DefaultApi20;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class GenerateStandardServices {
+class GenerateStandardServices {
 
     private static final Class<?> API_CLASS = AWeberApi.class;
     private static final String API_PACKAGE = API_CLASS.getPackageName();
@@ -105,29 +102,29 @@ public class GenerateStandardServices {
      * @throws ClassNotFoundException
      * @throws Throwable
      */
-    public static void main(final String[] args) throws ClassNotFoundException, Throwable {
-        List<String> classes = getClasses();
-        String imports = getImports(classes);
-        String enums = getEnums(classes);
+    public static void main(final String[] args) throws Throwable {
+        var classes = getClasses();
+        var imports = getImports(classes);
+        var enums = getEnums(classes);
 
-        String currentPath = GenerateStandardServices.class.getPackageName().replace('.', '/');
+        var currentPath = GenerateStandardServices.class.getPackageName().replace('.', '/');
 
-        String template = Files.readString(Paths.get(GenerateStandardServices.class.getClassLoader()
+        var template = Files.readString(Paths.get(GenerateStandardServices.class.getClassLoader()
                 .getResource(currentPath + "/StandardService.java.template").toURI()));
 
-        String source = template //
+        var source = template //
                 .replace("<imports>", imports) //
                 .replace("<enums>", enums) //
                 .replace("<enum-name>", ENUM_NAME);
 
-        File f = new File("./src/" + currentPath + "/" + ENUM_NAME + ".java");
-        try (FileWriter w = new FileWriter(f)) {
-            w.write(source);
+        final var path = Paths.get("src", currentPath, ENUM_NAME + ".java");
+        try (final var writer = Files.newBufferedWriter(path, StandardCharset.UTF_8)) {
+            writer.write(source);
         }
     }
 
     private static final String getImports(final List<String> classes) {
-        StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
         for (String c : classes) {
             sb.append("import ").append(API_PACKAGE).append(".").append(c).append(";\n");
         }
@@ -135,13 +132,14 @@ public class GenerateStandardServices {
     }
 
     private static final String getEnums(final List<String> classes) {
-        StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
         Iterator<String> it = classes.iterator();
         while (it.hasNext()) {
             String className = it.next();
             sb.append("    /**\n     * ").append(className).append(" service.\n     */\n");
             sb.append("    @Label(\"").append(toTitle(className)).append("\")\n");
-            sb.append("    ").append(className.toUpperCase()).append("(").append(className).append(".instance())");
+            sb.append("    ").append(className.toUpperCase(Locale.ENGLISH)).append("(").append(className)
+                    .append(".instance())");
 
             if (it.hasNext()) {
                 sb.append(",\n");
@@ -163,28 +161,36 @@ public class GenerateStandardServices {
         }
     }
 
+    private static final Pattern CLASS_PATTERN = Pattern.compile(API_PACKAGE_PATH + "/([^/$]+).class");
+
     private static List<String> getClasses() throws IOException, ClassNotFoundException {
-        List<String> classes = new ArrayList<>();
         String filePath = API_CLASS.getClassLoader().getResource(API_CLASS.getName().replace('.', '/') + ".class")
                 .getFile();
         // extract '<file-path>' from 'file:<file-path>!<inner-path>' string
         filePath = filePath.substring(5, filePath.indexOf('!'));
 
-        try (JarFile f = new JarFile(filePath)) {
-            Enumeration<JarEntry> entries = f.entries();
-            Pattern pattern = Pattern.compile(API_PACKAGE_PATH + "/([^/$]+).class");
-            while (entries.hasMoreElements()) {
-                Matcher m = pattern.matcher(entries.nextElement().getName());
-                if (m.matches()) {
-                    String className = m.group(1);
-                    if (DefaultApi20.class.isAssignableFrom(Class.forName(API_PACKAGE + "." + className))
-                            && !EXCLUDED_APIS.contains(className)) {
-                        classes.add(m.group(1));
-                    }
-                }
-            }
+        try (final var jarFile = new JarFile(filePath)) {
+            return findDefaultApi20Classes(jarFile);
         }
-        return classes;
     }
 
+    private static List<String> findDefaultApi20Classes(final JarFile f) throws ClassNotFoundException {
+        final var classes = new ArrayList<String>();
+
+        final var entries = f.entries();
+        while (entries.hasMoreElements()) {
+            final var m = CLASS_PATTERN.matcher(entries.nextElement().getName());
+            if (!m.matches()) {
+                continue;
+            }
+
+            final var className = m.group(1);
+            if (DefaultApi20.class.isAssignableFrom(Class.forName(API_PACKAGE + "." + className))
+                    && !EXCLUDED_APIS.contains(className)) {
+                classes.add(m.group(1));
+            }
+        }
+
+        return classes;
+    }
 }

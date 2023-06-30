@@ -48,13 +48,13 @@
  */
 package org.knime.credentials.base.oauth2.password;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.credentials.base.oauth.api.scribejava.PasswordFlow;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.ClientType;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.AppType;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -66,7 +66,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorPasswordNodeModel
+class OAuth2AuthenticatorPasswordNodeModel
         extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorPasswordSettings> {
 
     /**
@@ -78,28 +78,31 @@ public class OAuth2AuthenticatorPasswordNodeModel
     }
 
     @Override
-    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorPasswordSettings settings)
+    protected void validateOnConfigure(final PortObjectSpec[] inSpecs,
+            final OAuth2AuthenticatorPasswordSettings settings) throws InvalidSettingsException {
+
+        settings.m_service.validate();
+
+        if (settings.m_appType == AppType.CONFIDENTIAL) {
+            settings.m_confidentialApp.validateOnConfigure(getCredentialsProvider());
+        } else {
+            settings.m_publicApp.validate();
+        }
+
+        settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
+        settings.m_scopes.validate();
+    }
+
+    @Override
+    protected void validateOnExecute(final PortObject[] inObjects, final OAuth2AuthenticatorPasswordSettings settings)
             throws InvalidSettingsException {
 
-        if (StringUtils.isEmpty(settings.m_tokenUrl)) {
-            throw new InvalidSettingsException("Token endpoint URL is required");
+        // additional validation steps to ensure that credentials flow variables are
+        // present (this was not done during configure())
+        if (settings.m_appType == AppType.CONFIDENTIAL) {
+            settings.m_confidentialApp.validateOnExecute(getCredentialsProvider());
         }
-
-        if (StringUtils.isEmpty(settings.m_clientId)) {
-            throw new InvalidSettingsException("Client/App ID is required");
-        }
-
-        if (settings.m_clientType == ClientType.CONFIDENTIAL && StringUtils.isEmpty(settings.m_clientSecret)) {
-            throw new InvalidSettingsException("Client/App secret is required");
-        }
-
-        if (StringUtils.isEmpty(settings.m_pwdGrantUsername)) {
-            throw new InvalidSettingsException("Username is required");
-        }
-
-        if (StringUtils.isEmpty(settings.m_pwdGrantPassword)) {
-            throw new InvalidSettingsException("Password is required");
-        }
+        settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
     }
 
     @Override
@@ -107,8 +110,8 @@ public class OAuth2AuthenticatorPasswordNodeModel
             final OAuth20Service service) throws Exception {
 
         return new PasswordFlow(service, //
-                settings.m_pwdGrantUsername, //
-                settings.m_pwdGrantPassword)//
-                        .login(settings.m_scopes);
+                settings.m_usernamePassword.login(getCredentialsProvider()), //
+                settings.m_usernamePassword.secret(getCredentialsProvider()))//
+                        .login(settings.m_scopes.toScopeString());
     }
 }

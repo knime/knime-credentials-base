@@ -44,64 +44,101 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-13 (bjoern): created
+ *   2023-06-29 (bjoern): created
  */
 package org.knime.credentials.base.oauth2.base;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.node.AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
 
 /**
- * Node model base class that implements common behavior for all OAuth2
- * Authenticator nodes.
+ * Specifies Web UI sections for the family of OAuth2 Authenticator nodes. Not
+ * every node has to use all the sections.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
-        extends AuthenticatorNodeModel<T> {
+public class Sections {
 
     /**
-     * Constructor.
-     *
-     * @param configuration
-     *            The {@link WebUINodeConfiguration} to use.
-     * @param settingsClass
-     *            The concrete settings class to use.
+     * The section for OAuth2 service configuration.
      */
-    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
-        super(configuration, settingsClass);
-    }
+    @Section(title = "OAuth2 Service")
+    public interface ServiceSection {
 
-    @Override
-    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
-            throws Exception {
+        /**
+         * Subsection to place an optional service type chooser.
+         */
+        @Before(Standard.class)
+        @Before(Custom.class)
+        interface TypeChooser {
+        }
 
-        try (var service = settings.createService(getCredentialsProvider())) {
-            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
-            return CredentialFactory.fromScribeToken(scribeJavaToken,
-                    () -> settings.createService(getCredentialsProvider()));
+        /**
+         * Subsection to place an optional standard service chooser.
+         */
+        interface Standard {
+        }
+
+        /**
+         * Subsection for custom service configuration.
+         */
+        interface Custom {
+            interface Top {
+            }
+
+            @After(Top.class)
+            interface Middle {
+            }
+
+            @After(Middle.class)
+            interface Bottom {
+            }
         }
     }
 
     /**
-     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
-     * using the scribejava library.
-     *
-     * @param settings
-     * @param service
-     * @return the scribejava {@link OAuth2AccessToken}
-     * @throws Exception
+     * The section for OAuth2 application configuration.
      */
-    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
-            throws Exception; // NOSONAR
+    @Section(title = "Client/Application")
+    @After(ServiceSection.class)
+    public interface AppSection {
+        /**
+         * Subsection to place an optional app type chooser.
+         */
+        @Before(Public.class)
+        @Before(Confidential.class)
+        interface TypeChooser {
+        }
+
+        /**
+         * Subsection to place public app configuration.
+         */
+        interface Public {
+        }
+
+        /**
+         * Subsection to place confidential app configuration.
+         */
+        interface Confidential {
+        }
+
+        /**
+         * Subsection to place additional app configuration which is displayed at the
+         * bottom.
+         */
+        @After(Public.class)
+        @After(Confidential.class)
+        interface Bottom {
+        }
+    }
+
+    /**
+     * The section for OAuth2 scopes.
+     */
+    @Section(title = "Scopes")
+    @After(AppSection.class)
+    public interface ScopesSection {
+    }
 }

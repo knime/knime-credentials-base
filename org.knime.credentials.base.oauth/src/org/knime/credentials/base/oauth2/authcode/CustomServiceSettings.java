@@ -44,64 +44,50 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-13 (bjoern): created
+ *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.oauth2.authcode;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.node.AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
+import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
+import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsStandardService;
+import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
 /**
- * Node model base class that implements common behavior for all OAuth2
- * Authenticator nodes.
+ * {@link DefaultNodeSettings} that provides an authorization URL field on top
+ * of what is provided by {@link TokenEndpointSettings}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
-        extends AuthenticatorNodeModel<T> {
+class CustomServiceSettings extends TokenEndpointSettings {
 
-    /**
-     * Constructor.
-     *
-     * @param configuration
-     *            The {@link WebUINodeConfiguration} to use.
-     * @param settingsClass
-     *            The concrete settings class to use.
-     */
-    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
-        super(configuration, settingsClass);
-    }
+    @Widget(title = "Authorization endpoint URL", description = "The authorization endpoint URL of the OAuth service.")
+    @Layout(ServiceSection.Custom.Top.class)
+    @Effect(signals = IsStandardService.class, type = EffectType.HIDE)
+    String m_authorizationUrl;
 
     @Override
-    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
-            throws Exception {
+    public void validate() throws InvalidSettingsException {
+        super.validate();
 
-        try (var service = settings.createService(getCredentialsProvider())) {
-            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
-            return CredentialFactory.fromScribeToken(scribeJavaToken,
-                    () -> settings.createService(getCredentialsProvider()));
+        if (StringUtils.isEmpty(m_authorizationUrl)) {
+            throw new InvalidSettingsException("Authorization endpoing URL is required");
         }
     }
 
-    /**
-     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
-     * using the scribejava library.
-     *
-     * @param settings
-     * @param service
-     * @return the scribejava {@link OAuth2AccessToken}
-     * @throws Exception
-     */
-    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
-            throws Exception; // NOSONAR
+    @Override
+    public CustomApi20 createApi() {
+        return new CustomApi20(m_tokenUrl, //
+                m_authorizationUrl, //
+                m_tokenRequestMethod.toScribeVerb(), //
+                m_clientAuthMechanism.toScribeClientAuthentication());
+    }
 }

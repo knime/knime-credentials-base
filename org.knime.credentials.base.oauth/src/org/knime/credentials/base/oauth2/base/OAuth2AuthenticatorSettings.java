@@ -48,86 +48,47 @@
  */
 package org.knime.credentials.base.oauth2.base;
 
+import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
 
-import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
-import com.github.scribejava.core.oauth2.clientauthentication.ClientAuthentication;
-import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthenticationScheme;
-import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
- * Base class for OAuth2 Authenticator settings. Defines settings and enums
+ * Base interface for OAuth2 Authenticator settings. Defines settings and enums
  * common to all OAuth2 Authenticator nodes.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings({ "restriction", "javadoc" })
-public abstract class OAuth2AuthenticatorSettings implements DefaultNodeSettings {
+public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
 
-    public static final String CLIENT_TYPE_DESCRIPTION = """
-            Whether a public or confidential application flow should be used. A confidential application requires a secret.
+    String CLIENT_TYPE_DESCRIPTION = """
+            Whether a public or confidential application flow should be used.
+            A confidential application requires a secret.
             """;
 
-    public static final String CLIENT_SECRET_DESCRIPTION = """
-            The secret for the confidential application.
-            """;
-
-    @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth2 service.")
-    public String m_tokenUrl;
-
-    @Widget(title = "Token endpoint request method", //
-            description = "HTTP method to use when requesting the access token from the token endpoint.", //
-            advanced = true)
-    public HttpRequestMethod m_tokenRequestMethod = HttpRequestMethod.POST;
-
-    @Widget(title = "Client/App ID", description = "The client/application ID. In some services this is called API key.")
-    public String m_clientId;
-
-    @Widget(title = "Client/App authentication mechanism", //
-            description = """
-                    How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the most common mechanism,
-                    but some services expect these values to be part of the form-encoded request body.
-                        """, //
-            advanced = true)
-    public ClientAuthenticationType m_clientAuthMechanism = ClientAuthenticationType.HTTP_BASIC_AUTH;
-
-    @Widget(title = "Scopes", description = "The list of scopes separated by the whitespace or new line.")
-    public String m_scopes;
-
-    public enum HttpRequestMethod {
-        @Label("POST")
-        POST,
-
-        @Label("GET")
-        GET;
-    }
-
-    public enum ClientAuthenticationType {
-        @Label("HTTP Basic Auth")
-        HTTP_BASIC_AUTH,
-
-        @Label("Request Body")
-        REQUEST_BODY
-    }
-
-    public enum ClientType {
+    enum AppType {
         PUBLIC, CONFIDENTIAL;
     }
 
-    public static Verb toScribeVerb(final HttpRequestMethod method) {
-        return Verb.valueOf(method.toString());
+    enum ServiceType {
+        STANDARD, CUSTOM;
     }
 
-    public static ClientAuthentication toScribeClientAuthentication(final ClientAuthenticationType authType) {
-        if (authType == ClientAuthenticationType.HTTP_BASIC_AUTH) {
-            return HttpBasicAuthenticationScheme.instance();
-        } else {
-            return RequestBodyAuthenticationScheme.instance();
+    class IsStandardService extends OneOfEnumCondition<ServiceType> {
+        @Override
+        public ServiceType[] oneOf() {
+            return new ServiceType[] { ServiceType.STANDARD };
         }
     }
 
-    public abstract OAuth20Service createService();
+    class IsPublicApp extends OneOfEnumCondition<AppType> {
+        @Override
+        public AppType[] oneOf() {
+            return new AppType[] { AppType.PUBLIC };
+        }
+    }
+
+    OAuth20Service createService(final CredentialsProvider credsProvider);
 }

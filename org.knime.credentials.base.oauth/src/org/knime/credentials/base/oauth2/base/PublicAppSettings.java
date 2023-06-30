@@ -44,64 +44,47 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-13 (bjoern): created
+ *   2023-06-29 (bjoern): created
  */
 package org.knime.credentials.base.oauth2.base;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.node.AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
+import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.LayoutGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
+import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 
 /**
- * Node model base class that implements common behavior for all OAuth2
- * Authenticator nodes.
+ * Implementation of {@link DefaultNodeSettings} to supply the ID of a public
+ * OAuth2 app.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public abstract class OAuth2AuthenticatorNodeModel<T extends OAuth2AuthenticatorSettings>
-        extends AuthenticatorNodeModel<T> {
+public class PublicAppSettings implements DefaultNodeSettings, LayoutGroup {
 
     /**
-     * Constructor.
-     *
-     * @param configuration
-     *            The {@link WebUINodeConfiguration} to use.
-     * @param settingsClass
-     *            The concrete settings class to use.
+     * Field for the app ID.
      */
-    protected OAuth2AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
-        super(configuration, settingsClass);
-    }
+    @Widget(title = "Client/App ID", description = "The client/application ID. In some "
+            + "services this is called API key.")
+    @Layout(AppSection.Public.class)
+    @Effect(signals = IsPublicApp.class, type = EffectType.SHOW)
+    public String m_appId;
 
-    @Override
-    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
-            throws Exception {
-
-        try (var service = settings.createService(getCredentialsProvider())) {
-            var scribeJavaToken = fetchOAuth2AccessToken(settings, service);
-            return CredentialFactory.fromScribeToken(scribeJavaToken,
-                    () -> settings.createService(getCredentialsProvider()));
+    /**
+     *
+     * @throws InvalidSettingsException
+     *             when the app ID was not specified.
+     */
+    public void validate() throws InvalidSettingsException {
+        if (StringUtils.isEmpty(m_appId)) {
+            throw new InvalidSettingsException("Client/App ID is required");
         }
     }
-
-    /**
-     * Subclasses must implement this method to fetch a {@link OAuth2AccessToken}
-     * using the scribejava library.
-     *
-     * @param settings
-     * @param service
-     * @return the scribejava {@link OAuth2AccessToken}
-     * @throws Exception
-     */
-    protected abstract OAuth2AccessToken fetchOAuth2AccessToken(final T settings, final OAuth20Service service)
-            throws Exception; // NOSONAR
 }

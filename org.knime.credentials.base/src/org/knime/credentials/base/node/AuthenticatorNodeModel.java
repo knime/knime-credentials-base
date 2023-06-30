@@ -110,7 +110,7 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
             throws InvalidSettingsException {
 
         m_credentialCacheKey = null;
-        validate(inSpecs, modelSettings);
+        validateOnConfigure(inSpecs, modelSettings);
         return new PortObjectSpec[] { createSpecInConfigure(inSpecs, modelSettings) };
     }
 
@@ -143,7 +143,8 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
      * @throws InvalidSettingsException
      *             if any of the settings are invalid.
      */
-    protected abstract void validate(PortObjectSpec[] inSpecs, final T settings) throws InvalidSettingsException;
+    protected abstract void validateOnConfigure(PortObjectSpec[] inSpecs, final T settings)
+            throws InvalidSettingsException;
 
     /**
      * Default execute() implementation that invokes
@@ -154,10 +155,25 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec, final T settings)
             throws Exception {
 
+        validateOnExecute(inObjects, settings);
         var credential = createCredential(inObjects, exec, settings);
         m_credentialCacheKey = CredentialCache.store(credential);
         return new PortObject[] { new CredentialPortObject(new CredentialPortObjectSpec(credential.getType()), //
                 m_credentialCacheKey) };
+    }
+
+    /**
+     * Invoked during execute() to validate the given settings. Subclasses can
+     * override this method to add more validation logic during execute().
+     *
+     * @param inObjects
+     *            the input {@link PortObject PortObjects}
+     * @param settings
+     *            The settings to validate.
+     * @throws InvalidSettingsException
+     *             if any of the settings are invalid.
+     */
+    protected void validateOnExecute(final PortObject[] inObjects, final T settings) throws InvalidSettingsException {
     }
 
     /**
@@ -175,11 +191,20 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
      *             if something went wrong while creating the credential.
      */
     protected abstract Credential createCredential(PortObject[] inObjects, ExecutionContext exec, T settings)
-            throws Exception;
+            throws Exception; // NOSONAR this is on purpose
 
     @Override
     protected final void onDispose() {
         onReset();
+        onDisposeInternal();
+    }
+
+    /**
+     * Subclasses can override this method to do additional cleanup during
+     * {@link #onDispose()}.
+     */
+    protected void onDisposeInternal() {
+        // do nothing
     }
 
     @Override

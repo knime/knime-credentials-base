@@ -71,7 +71,10 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class CredentialFactory {
+public final class CredentialFactory {
+
+    private CredentialFactory() {
+    }
 
     /**
      * Creates a new {@link Credential} from the given scribejava access token.
@@ -83,11 +86,14 @@ public class CredentialFactory {
      *            token refresh.
      * @return a newly created {@link Credential}
      */
-    public static Credential fromScribeToken(final OAuth2AccessToken scribeToken, final Supplier<OAuth20Service> serviceSupplier) {
+    public static Credential fromScribeToken(final OAuth2AccessToken scribeToken,
+            final Supplier<OAuth20Service> serviceSupplier) {
+
         var accessToken = scribeToken.getAccessToken();
-        var idToken = scribeToken instanceof OpenIdOAuth2AccessToken
-                ? ((OpenIdOAuth2AccessToken) scribeToken).getOpenIdToken()
-                : null;
+        String idToken = null;
+        if (scribeToken instanceof OpenIdOAuth2AccessToken openIdToken) {
+            idToken = openIdToken.getOpenIdToken();
+        }
         var refreshToken = scribeToken.getRefreshToken();
         var expiresAfter = Optional.ofNullable(scribeToken.getExpiresIn())//
                 .map(secs -> Instant.now().plusSeconds(secs))//
@@ -114,16 +120,16 @@ public class CredentialFactory {
     private static <T extends Credential> Function<String, T> createTokenRefresher(
             final Supplier<OAuth20Service> serviceSupplier) {
 
-        return refreshToken -> {
+        return refreshToken -> { // NOSONAR
             try (var service = serviceSupplier.get()) {
                 var scribeToken = service.refreshAccessToken(refreshToken);
                 return (T) fromScribeToken(scribeToken, serviceSupplier);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e.getCause());
+            } catch (InterruptedException e) { // NOSONAR
+                throw new RuntimeException(e); // NOSONAR
+            } catch (ExecutionException e) { // NOSONAR
+                throw new RuntimeException(e.getCause()); // NOSONAR
             }
         };
     }

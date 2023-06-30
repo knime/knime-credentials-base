@@ -50,11 +50,25 @@ package org.knime.credentials.base.oauth2.clientcredentials;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
+import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
+import org.knime.credentials.base.oauth2.base.ScopeSettings;
+import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
+import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
 import com.github.scribejava.core.oauth.OAuth20Service;
 
@@ -64,33 +78,66 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-final class OAuth2AuthenticatorClientCredsSettings extends OAuth2AuthenticatorSettings {
+final class OAuth2AuthenticatorClientCredsSettings implements OAuth2AuthenticatorSettings {
 
-    @Widget(title = "Client/App Secret", description = CLIENT_SECRET_DESCRIPTION)
-    String m_clientSecret;
+    /**
+     * A section for (optional) additional request fields.
+     */
+    @Section(title = "Additional request fields", advanced = true)
+    @After(ScopesSection.class)
+    public interface AdditionalFieldsSection {
+    }
+
+    @Hidden
+    @Persist(hidden = true, optional = true)
+    @Signal(condition = IsStandardService.class)
+    ServiceType m_hiddenServiceType = ServiceType.CUSTOM;
+
+    TokenEndpointSettings m_service = new TokenEndpointSettings();
+
+    @Hidden
+    @Persist(hidden = true, optional = true)
+    @Signal(condition = IsPublicApp.class)
+    AppType m_hiddenAppType = AppType.CONFIDENTIAL;
+
+    ConfidentialAppSettings m_app = new ConfidentialAppSettings();
+
+    ScopeSettings m_scopes = new ScopeSettings();
 
     static final class AdditionalRequestField implements DefaultNodeSettings {
+        @HorizontalLayout
+        interface NameAndValue {
+        }
+
         @Widget(title = "Field name", description = "Name of the additional request body field.")
+        @Layout(NameAndValue.class)
         String m_name;
 
         @Widget(title = "Field value", description = "Value of the additional request body field.")
+        @Layout(NameAndValue.class)
         String m_value;
+
+        void validate() throws InvalidSettingsException {
+            if (StringUtils.isBlank(m_name) || StringUtils.isBlank(m_value)) {
+                throw new InvalidSettingsException("Please specify name and value for each additional request field");
+            }
+        }
     }
 
     @Widget(title = "Fields", //
             description = "Allows to add request body fields (key and value) to the token endpoint request.", //
             advanced = true)
+    @ArrayWidget(addButtonText = "Add request field")
+    @Layout(AdditionalFieldsSection.class)
     AdditionalRequestField[] m_additionalRequestFields = new AdditionalRequestField[0];
 
     @Override
-    public OAuth20Service createService() {
-        final var api = new CustomApi20(m_tokenUrl, //
-                "", //
-                toScribeVerb(m_tokenRequestMethod), //
-                toScribeClientAuthentication(m_clientAuthMechanism));
+    public OAuth20Service createService(final CredentialsProvider credsProvider) {
+        final var api = m_service.createApi();
 
-        var builder = new CustomOAuth2ServiceBuilder(m_clientId);
-        builder.apiSecret(m_clientSecret);
+        var builder = new CustomOAuth2ServiceBuilder(m_app.login(credsProvider))//
+                .apiSecret(m_app.secret(credsProvider));
+
         Arrays.stream(m_additionalRequestFields)//
                 .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
 

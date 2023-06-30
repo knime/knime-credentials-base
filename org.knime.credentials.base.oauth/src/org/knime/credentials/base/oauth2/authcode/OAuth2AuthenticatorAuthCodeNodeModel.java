@@ -48,14 +48,12 @@
  */
 package org.knime.credentials.base.oauth2.authcode;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth2.authcode.OAuth2AuthenticatorAuthCodeSettings.ServiceType;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.ClientType;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -68,8 +66,12 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class OAuth2AuthenticatorAuthCodeNodeModel
+final class OAuth2AuthenticatorAuthCodeNodeModel
         extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorAuthCodeSettings> {
+
+    private static final String LOGIN_FIRST_ERROR = "Please use the configuration dialog to log in first.";
+
+    private OAuth2AccessTokenHolder m_tokenHolder;
 
     /**
      * @param configuration
@@ -80,36 +82,32 @@ public class OAuth2AuthenticatorAuthCodeNodeModel
     }
 
     @Override
-    protected void validate(final PortObjectSpec[] inSpecs, final OAuth2AuthenticatorAuthCodeSettings settings)
-            throws InvalidSettingsException {
+    protected void validateOnConfigure(final PortObjectSpec[] inSpecs,
+            final OAuth2AuthenticatorAuthCodeSettings settings) throws InvalidSettingsException {
 
-        if (settings.m_serviceType == ServiceType.CUSTOM) {
-            if (StringUtils.isEmpty(settings.m_tokenUrl)) {
-                throw new InvalidSettingsException("Token endpoint URL is required");
-            }
-            if (StringUtils.isEmpty(settings.m_authorizationUrl)) {
-                throw new InvalidSettingsException("Authorization endpoing URL is required");
-            }
-        }
+        settings.validate(getCredentialsProvider());
 
-        if (settings.m_serviceType == ServiceType.STANDARD) {
-            if (settings.m_standardService == null) {
-                throw new InvalidSettingsException("No service is selected");
-            }
-        }
-
-        if (StringUtils.isEmpty(settings.m_clientId)) {
-            throw new InvalidSettingsException("Client/App ID is required");
-        }
-
-        if (settings.m_clientType == ClientType.CONFIDENTIAL && StringUtils.isEmpty(settings.m_clientSecret)) {
-            throw new InvalidSettingsException("Client/App secret is required");
+        if (settings.m_tokenCacheKey == null) {
+            throw new InvalidSettingsException(LOGIN_FIRST_ERROR);
+        } else {
+            m_tokenHolder = CredentialCache.<OAuth2AccessTokenHolder>get(settings.m_tokenCacheKey)//
+                    .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
         }
     }
 
     @Override
     protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
             final OAuth20Service service) throws Exception {
-        return OAuth2AuthenticatorAuthCodeSettings.fetchAccessToken(settings);
+        return m_tokenHolder.m_token;
+    }
+
+    @Override
+    protected void onDisposeInternal() {
+        // dispose of the scribejava token that was retrieved interactively in the node
+        // dialog
+        if (m_tokenHolder != null) {
+            CredentialCache.delete(m_tokenHolder.m_cacheKey);
+            m_tokenHolder = null;
+        }
     }
 }

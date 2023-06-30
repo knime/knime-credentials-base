@@ -53,7 +53,7 @@ import org.knime.core.webui.node.impl.WebUINodeFactory;
 import org.knime.credentials.base.CredentialPortObject;
 
 /**
- * Node factory for the {@link OAuth2AuthenticatorAuthCodeNodeModel} node.
+ * Node factory for the OAuth2 Authenticator node.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
@@ -62,31 +62,32 @@ public class OAuth2AuthenticatorAuthCodeNodeFactory
         extends WebUINodeFactory<OAuth2AuthenticatorAuthCodeNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-                    <p>This node supports the (interactive)
-                    <a href="https://oauth.net/2/grant-types/authorization-code/">OAuth 2.0 Authorization Code</a> grant flow.
-                    The target audience of this node are users with a technical understanding of OAuth 2 and (web) developers.
-                    For less technical users, it may be simpler to use service-specific nodes, such as Microsoft Authenticator
-                    or Google Authenticator.
-                    </p>
-                    <p>The auth code flow is used to obtain an access token via an interactive login, which works as follows:
-                    <ul>
-                        <li><b>In the node settings:</b> the user specifies all required information and then
-                             clicks on "Login", which will open a new browser window.</li>
-                        <li><b>In the new browser window:</b>The user logs into the authentication service, consenting
-                            to any required permissions (scopes). At the end of this process the authentication service
-                            redirects the browser to the configured redirect URL, passing an <i>authorization code</i>.</li>
-                        <li><b>In the node settings:</b> The authorization code is received (via the redirect) and is used to acquire
-                            an access token. The user can now close the node settings (OK).</li>
-                        <li>The node can now be executed.</li>
-                        <li>Whenever the user closes the workflow, the access token is deleted. Opening the workflow again will
-                        require a fresh interactive login as above.</li>
-                    </ul>
-                    </p>
-                    <p>
-                    <b>Note:</b> Currently, the node can only be used in KNIME Analytics Platform. The node does not support
-                    execution on KNIME (Business) Hub or KNIME Server, also not via Remote Workflow Editor.
-                    </p>
+            <p>This node supports the (interactive)
+            <a href="https://oauth.net/2/grant-types/authorization-code/">OAuth 2.0 Authorization Code</a> grant flow.
+            The target audience of this node are users with a technical understanding of OAuth 2 and (web) developers.
+            For less technical users, it may be simpler to use service-specific nodes, such as Microsoft Authenticator
+            or Google Authenticator.
+            </p>
+            <p>The auth code flow is used to obtain an access token via an interactive login, which works as follows:
+            <ul>
+                <li><b>In the node settings:</b> the user specifies all required information and then
+                     clicks on "Login", which will open a new browser window.</li>
+                <li><b>In the new browser window:</b>The user logs into the authentication service, consenting
+                    to any required permissions (scopes). At the end of this process the authentication service
+                    redirects the browser to the configured redirect URL, passing an <i>authorization code</i>.</li>
+                <li><b>In the node settings:</b> The authorization code is received (via the redirect) and is used to
+                acquire an access token. The user can now close the node settings (OK).</li>
+                <li>The node can now be executed.</li>
+                <li>Whenever the user closes the workflow, the access token is deleted. Opening the workflow again will
+                require a fresh interactive login as above.</li>
+            </ul>
+            </p>
+            <p>
+            <b>Note:</b> Currently, the node can only be used in KNIME Analytics Platform. The node does not support
+            execution on KNIME (Business) Hub or KNIME Server, also not via Remote Workflow Editor.
+            </p>
             """;
+
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
             .name("OAuth2 Authenticator")//
             .icon("../base/oauth.png")//
