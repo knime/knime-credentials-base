@@ -53,14 +53,14 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortViewData;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.CredentialTypeRegistry;
 import org.knime.credentials.base.NoOpCredentialSerializer;
@@ -199,18 +199,23 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
     }
 
     @Override
-    public String[][] describe() {
-        List<String[]> list = new ArrayList<>();
-        list.add(new String[] { "Access token", obfuscate(m_accessToken) });
-        list.add(new String[] { "Access token type", m_tokenType });
-        if (m_expiresAfter != null) {
-            list.add(new String[] { "Expires after",
-                    m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME) });
-        }
+    public CredentialPortViewData describe() {
+        final var sections = new LinkedList<CredentialPortViewData.Section>();
+
+        sections.add(new CredentialPortViewData.Section("Access token", new String[][] { //
+                { "Property", "Value" }, //
+                { "Token", obfuscate(m_accessToken) }, //
+                { "Token type", m_tokenType }, //
+                { "Expires after", m_expiresAfter != null//
+                        ? m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME)
+                        : "n/a" } }));
+
         if (m_refreshToken != null) {
-            list.add(new String[] { "Refresh token", obfuscate(m_refreshToken) });
+            sections.add(new CredentialPortViewData.Section("Refresh token",
+                    new String[][] { { "Token", obfuscate(m_refreshToken) } }));
         }
-        return list.toArray(new String[0][0]);
+
+        return new CredentialPortViewData(sections);
     }
 
     private static String obfuscate(final String toObfuscate) {

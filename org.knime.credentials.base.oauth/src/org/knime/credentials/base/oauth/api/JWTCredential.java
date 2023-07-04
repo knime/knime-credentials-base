@@ -53,6 +53,7 @@ import java.io.UncheckedIOException;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,6 +63,8 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortViewData;
+import org.knime.credentials.base.CredentialPortViewData.Section;
 import org.knime.credentials.base.CredentialType;
 import org.knime.credentials.base.CredentialTypeRegistry;
 import org.knime.credentials.base.NoOpCredentialSerializer;
@@ -248,25 +251,34 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
     }
 
     @Override
-    public String[][] describe() {
-        List<String[]> list = new ArrayList<>();
+    public CredentialPortViewData describe() {
+        final var sections = new LinkedList<CredentialPortViewData.Section>();
+
         try {
-            list.add(new String[] { "Access token type", m_tokenType });
-            list.addAll(describe(getAccessToken(), "Access token: "));
-            getIdToken().ifPresent(t -> list.addAll(describe(t, "ID token: ")));
-            getRefreshToken().ifPresent(t -> list.addAll(describe(t, "Refresh token: ")));
+            sections.add(
+                    new Section(String.format("Access token (type: %s)", m_tokenType), describe(getAccessToken())));
+
+            if (getIdToken().isPresent()) {
+                sections.add(new Section("ID token", describe(getIdToken().orElseThrow())));
+            }
+
+            if (getRefreshToken().isPresent()) {
+                sections.add(new Section("Refresh token", describe(getRefreshToken().orElseThrow())));
+            }
         } catch (IOException ex) {// NOSONAR error message is attached to description
-            list.add(new String[] { "error", ex.getMessage() });
+            sections.add(
+                    new Section("Error", new String[][] { { "message", ex.getMessage() } }));
         }
-        return list.toArray(new String[0][0]);
+        return new CredentialPortViewData(sections);
     }
 
-    private static List<String[]> describe(final JWT token, final String prefix) {
+    private static String[][] describe(final JWT token) {
         List<String[]> list = new ArrayList<>();
+        list.add(new String[] { "Claim", "Value" });
         Map<String, Object> claims = token.getAllClaims();
         for (Entry<String, Object> e : claims.entrySet()) {
-            list.add(new String[] { prefix + e.getKey(), e.getValue().toString() });
+            list.add(new String[] { e.getKey(), e.getValue().toString() });
         }
-        return list;
+        return list.toArray(String[][]::new);
     }
 }

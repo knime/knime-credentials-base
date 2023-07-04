@@ -48,8 +48,13 @@
  */
 package org.knime.credentials.base.internal;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.knime.core.webui.data.InitialDataService;
 import org.knime.core.webui.data.RpcDataService;
 import org.knime.core.webui.node.port.PortSpecViewFactory;
@@ -66,18 +71,21 @@ import org.knime.credentials.base.CredentialPortObjectSpec;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-class PortViewFactories {
+final class PortViewFactories {
 
-    final static PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
+    static final PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
 
-    final static PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = PortViewFactories::createPortSpecView;
+    static final PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = //
+            PortViewFactories::createPortSpecView;
+
+    private PortViewFactories() {
+    }
 
     private static PortView createPortView(final CredentialPortObject portObject) {
         return new PortView() {
             @Override
             public Page getPage() {
-                var page = Page.builder(() -> createHtmlContent(portObject), "index.html").build();
-                return page;
+                return Page.builder(() -> createHtmlContent(portObject), "index.html").build();
             }
 
             @SuppressWarnings("unchecked")
@@ -95,19 +103,51 @@ class PortViewFactories {
 
     private static String createHtmlContent(final CredentialPortObject portObject) {
         final var sb = new StringBuilder();
-        sb.append("<html><body><table>");
+        sb.append("<html><head><style>\n");
+        try (var in = PortViewFactories.class.getClassLoader().getResourceAsStream("table.css")) {
+            sb.append(String.join("\n", IOUtils.readLines(in, StandardCharsets.UTF_8)));
+        } catch (IOException ex) { // NOSONAR ignore, should always work
+        }
+        sb.append("</style></head><body>\n");
 
-        portObject.getCredential(Credential.class).ifPresent(cred -> {
-            for (String[] kv : cred.describe()) {
-                sb.append("<tr><td>") //
-                        .append(kv[0]) //
-                        .append("</td><td>") //
-                        .append(kv[1]) //
-                        .append("</td></tr>");
+        final var credentialHtml = portObject.getCredential(Credential.class)//
+                .map(PortViewFactories::renderPortViewData)//
+                .orElse("Nothing to display.");
+        sb.append(credentialHtml);
+
+        sb.append("</body></html>\n");
+        return sb.toString();
+    }
+
+    private static String renderPortViewData(final Credential cred) {
+        final var sb = new StringBuilder();
+
+        for (var section : cred.describe().sections()) {
+            sb.append(String.format("<h4>%s</h4>%n", section.title()));
+
+            sb.append("<table>\n");
+
+            final var columns = section.columns();
+
+            // render first row as table header
+            if (columns.length >= 1) {
+                sb.append("<tr>\n");
+                sb.append(Arrays.stream(columns[0])//
+                        .map(h -> String.format("<th>%s</th>%n", h))//
+                        .collect(Collectors.joining()));
+                sb.append("</tr>\n");
             }
-        });
 
-        sb.append("</table></body></html>");
+            for (var i = 1; i < columns.length; i++) {
+                sb.append("<tr>\n");
+                sb.append(Arrays.stream(columns[i])//
+                        .map(h -> String.format("<td>%s</td>%n", h))//
+                        .collect(Collectors.joining()));
+                sb.append("</tr>\n");
+            }
+            sb.append("</table>\n");
+        }
+
         return sb.toString();
     }
 

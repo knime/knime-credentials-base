@@ -44,41 +44,37 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-29 (bjoern): created
+ *   2023-07-03 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.authcode;
+package org.knime.credentials.base;
 
-import java.util.Collections;
-import java.util.UUID;
+import java.util.List;
 
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortViewData;
-import org.knime.credentials.base.CredentialType;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
+import org.knime.credentials.base.CredentialPortViewData.Section;
 
 /**
- * Dummy credential that can hold a scribejava {@link OAuth2AccessToken}. The
- * sole purpose of this class is to pass a {@link OAuth2AccessToken} created in
- * the OAuth2 Authenticator node dialog to the node model, using the
- * {@link CredentialCache}.
+ * A simple data structure to describe the contents of a {@link Credential} in a
+ * port view. The idea of the port view is to display one HTML table per
+ * section.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
+ *
+ * @param sections
+ *            The sections of the information to display.
  */
-final class OAuth2AccessTokenHolder implements Credential {
+public record CredentialPortViewData(List<Section> sections) {
 
-    UUID m_cacheKey;
-
-    OAuth2AccessToken m_token;
-
-    @Override
-    public CredentialType getType() {
-        return null;
-    }
-
-    @Override
-    public CredentialPortViewData describe() {
-        return new CredentialPortViewData(Collections.emptyList());
+    /**
+     * Describe a section of a {@link Credential} port view. A section has a title
+     * and a columns array, that will be displayed as a table. The first row, i.e.
+     *
+     * @param title
+     *            The title of the section.
+     * @param columns
+     *            Information which will be displayed in a table, i.e. columns[0] is
+     *            the first row. The values in the first row will be used as column
+     *            headers.
+     */
+    public static record Section(String title, String[][] columns) { // NOSONAR
     }
 }

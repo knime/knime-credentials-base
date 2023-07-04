@@ -64,5 +64,5 @@ public interface Credential {
     /**
      * @return The key/value pairs describing the credentials.
      */
-    String[][] describe();
+    CredentialPortViewData describe();
 }
