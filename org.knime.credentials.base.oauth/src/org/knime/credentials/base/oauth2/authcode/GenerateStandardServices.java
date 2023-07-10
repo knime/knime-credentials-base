@@ -85,7 +85,7 @@ class GenerateStandardServices {
 
     private static final String ENUM_NAME = "StandardService";
 
-    private static final Set<String> EXCLUDED_APIS = Set.of("FrappeApi");
+    private static final Set<String> EXCLUDED_APIS = Set.of("FrappeApi", "BoxApi20");
 
     private static final Map<String, String> CUSTOM_TITLES = Map.of( //
             "HiOrgServerApi20", "HiOrg-Server", //

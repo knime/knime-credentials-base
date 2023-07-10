@@ -47,10 +47,9 @@
 package org.knime.credentials.base.oauth2.authcode;
 
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-
+import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.apis.Asana20Api;
 import com.github.scribejava.apis.AutomaticAPI;
-import com.github.scribejava.apis.BoxApi20;
 import com.github.scribejava.apis.DataportenApi;
 import com.github.scribejava.apis.DiscordApi;
 import com.github.scribejava.apis.DoktornaraboteApi;
@@ -92,7 +91,6 @@ import com.github.scribejava.apis.VkontakteApi;
 import com.github.scribejava.apis.WunderlistAPI;
 import com.github.scribejava.apis.XeroApi20;
 import com.github.scribejava.apis.YahooApi20;
-import com.github.scribejava.core.builder.api.DefaultApi20;
 
 
 /**
@@ -112,11 +110,6 @@ public enum StandardService {
      */
     @Label("Automatic")
     AUTOMATICAPI(AutomaticAPI.instance()),
-    /**
-     * BoxApi20 service.
-     */
-    @Label("Box")
-    BOXAPI20(BoxApi20.instance()),
     /**
      * DataportenApi service.
      */
