@@ -59,7 +59,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.DialogDataServiceHandlerResult;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.Result;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
@@ -128,15 +128,11 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     @Layout(AppSection.Bottom.class)
     String m_redirectUrl = "http://localhost:43769";
 
-    @ButtonWidget(invokeButtonText = "Login", //
-            cancelButtonText = "Cancel login", //
-            succeededButtonText = "Login again", //
-            actionHandler = LoginActionHandler.class, //
-            isMultipleUse = true, //
+    @ButtonWidget(actionHandler = LoginActionHandler.class, //
             showTitleAndDescription = false)
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
-            + "allows to interactively log into the service.")
+                    + "allows to interactively log into the service.")
     @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
     @Layout(AppSection.Bottom.class)
     UUID m_tokenCacheKey;
@@ -154,31 +150,46 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     static class LoginActionHandler extends CancelableActionHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
 
         @Override
-        protected Future<DialogDataServiceHandlerResult<UUID>> invoke(
-                final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context) {
+        protected Future<Result<UUID>> invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
+                final SettingsCreationContext context) {
 
             return KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> doDialogLogin(settings, context));
         }
 
-        private static DialogDataServiceHandlerResult<UUID> doDialogLogin(
-                final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context) {
+        private static Result<UUID> doDialogLogin(final OAuth2AuthenticatorAuthCodeSettings settings,
+                final SettingsCreationContext context) {
 
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
-                return DialogDataServiceHandlerResult.fail(e.getMessage());
+                return Result.fail(e.getMessage());
             }
 
             try {
                 var tokenHolder = new OAuth2AccessTokenHolder();
                 tokenHolder.m_token = fetchAccessToken(settings, context);
                 tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
-                return DialogDataServiceHandlerResult.succeed(tokenHolder.m_cacheKey);
+                return Result.succeed(tokenHolder.m_cacheKey);
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
-                return DialogDataServiceHandlerResult.fail(e.getMessage());
+                return Result.fail(e.getMessage());
             }
         }
+
+        @Override
+        protected String overrideText(final States state) {
+            switch (state) {
+            case READY:
+                return "Login";
+            case CANCEL:
+                return "Cancel login";
+            case DONE:
+                return "Login again";
+            default:
+                return null;
+            }
+        }
+
     }
 
     /**
@@ -210,7 +221,6 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         } else {
             api = m_standardService.getApi();
         }
-
 
         final ServiceBuilder builder;
         if (m_appType == AppType.PUBLIC) {
