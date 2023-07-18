@@ -127,6 +127,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     String m_redirectUrl = "http://localhost:43769";
 
     @ButtonWidget(actionHandler = LoginActionHandler.class, //
+            updateHandler = LoginUpdateHandler.class, //
             showTitleAndDescription = false)
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
@@ -168,7 +169,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         }
 
         @Override
-        protected String overrideText(final States state) {
+        protected String getButtonText(final States state) {
             switch (state) {
             case READY:
                 return "Login";
@@ -181,6 +182,10 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
             }
         }
 
+    }
+
+    static class LoginUpdateHandler
+            extends CancelableActionHandler.UpdateHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
     }
 
     /**
