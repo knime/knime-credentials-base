@@ -50,16 +50,14 @@ package org.knime.credentials.base.oauth2.authcode;
 
 import java.net.URI;
 import java.util.UUID;
-import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.Result;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.RequestFailureException;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
@@ -150,29 +148,22 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     static class LoginActionHandler extends CancelableActionHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
 
         @Override
-        protected Future<Result<UUID>> invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
-                final SettingsCreationContext context) {
-
-            return KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> doDialogLogin(settings, context));
-        }
-
-        private static Result<UUID> doDialogLogin(final OAuth2AuthenticatorAuthCodeSettings settings,
-                final SettingsCreationContext context) {
-
+        protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context)
+                throws RequestFailureException {
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
-                return Result.fail(e.getMessage());
+                throw new RequestFailureException(e.getMessage());
             }
 
             try {
                 var tokenHolder = new OAuth2AccessTokenHolder();
                 tokenHolder.m_token = fetchAccessToken(settings, context);
                 tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
-                return Result.succeed(tokenHolder.m_cacheKey);
+                return tokenHolder.m_cacheKey;
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
-                return Result.fail(e.getMessage());
+                throw new RequestFailureException(e.getMessage());
             }
         }
 
