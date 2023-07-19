@@ -57,7 +57,6 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.RequestFailureException;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
@@ -68,6 +67,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
@@ -150,11 +150,11 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
         @Override
         protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context)
-                throws RequestFailureException {
+                throws WidgetHandlerException {
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
-                throw new RequestFailureException(e.getMessage());
+                throw new WidgetHandlerException(e.getMessage());
             }
 
             try {
@@ -164,7 +164,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
                 return tokenHolder.m_cacheKey;
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
-                throw new RequestFailureException(e.getMessage());
+                throw new WidgetHandlerException(e.getMessage());
             }
         }
 
