@@ -149,7 +149,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     static class LoginActionHandler extends CancelableActionHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
 
         @Override
-        protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings, final SettingsCreationContext context)
+        protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings, final DefaultNodeSettingsContext context)
                 throws WidgetHandlerException {
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
@@ -200,7 +200,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
      *             if the login failed for some reason.
      */
     static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
-            final SettingsCreationContext context) throws Exception {
+            final DefaultNodeSettingsContext context) throws Exception {
 
         try (var service = settings.createService(context.getCredentialsProvider().orElseThrow())) {
             return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//

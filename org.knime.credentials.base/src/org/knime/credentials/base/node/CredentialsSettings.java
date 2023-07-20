@@ -75,7 +75,7 @@ public interface CredentialsSettings extends DefaultNodeSettings, LayoutGroup {
      */
     final class CredentialsFlowVarChoicesProvider implements ChoicesProvider {
         @Override
-        public String[] choices(final SettingsCreationContext context) {
+        public String[] choices(final DefaultNodeSettingsContext context) {
             return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE)//
                     .keySet()//
                     .toArray(String[]::new);
