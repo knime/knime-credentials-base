@@ -6,7 +6,7 @@
          point="org.knime.core.PortType">
       <portType
             hidden="false"
-            name="org.knime.credentials.base.CredentialPortObject"
+            name="Credential Port Object"
             color="#4386f7"
             objectClass="org.knime.credentials.base.CredentialPortObject"
             objectSerializer="org.knime.credentials.base.CredentialPortObject$Serializer"
