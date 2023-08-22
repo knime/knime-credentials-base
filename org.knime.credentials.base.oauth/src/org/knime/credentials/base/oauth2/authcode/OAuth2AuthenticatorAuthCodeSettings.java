@@ -75,6 +75,7 @@ import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
 import org.knime.credentials.base.oauth2.base.Sections.AppSection;
+import org.knime.credentials.base.oauth2.base.Sections.Footer;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
 
@@ -126,6 +127,9 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     @Layout(AppSection.Bottom.class)
     String m_redirectUrl = "http://localhost:43769";
 
+    @Layout(ScopesSection.class)
+    ScopeSettings m_scopes = new ScopeSettings();
+
     @ButtonWidget(actionHandler = LoginActionHandler.class, //
             updateHandler = LoginUpdateHandler.class, //
             showTitleAndDescription = false)
@@ -133,11 +137,8 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
             description = "Clicking on login opens a new browser window/tab which "
                     + "allows to interactively log into the service.")
     @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
-    @Layout(AppSection.Bottom.class)
+    @Layout(Footer.class)
     UUID m_tokenCacheKey;
-
-    @Layout(ScopesSection.class)
-    ScopeSettings m_scopes = new ScopeSettings();
 
     OAuth2AuthenticatorAuthCodeSettings() {
     }
