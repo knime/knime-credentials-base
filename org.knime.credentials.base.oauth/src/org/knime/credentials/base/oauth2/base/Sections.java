@@ -141,4 +141,12 @@ public class Sections {
     @After(AppSection.class)
     public interface ScopesSection {
     }
+
+    /**
+     * The section for OAuth2 scopes.
+     */
+    @Section
+    @After(ScopesSection.class)
+    public interface Footer {
+    }
 }
