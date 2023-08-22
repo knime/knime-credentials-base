@@ -48,6 +48,8 @@
  */
 package org.knime.credentials.base.oauth.api.scribejava;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -73,7 +75,8 @@ public class ClientCredentialsFlow extends FlowBase {
     @Override
     public OAuth2AccessToken login(final String scopes) throws Exception {
         try {
-            return getService().getAccessTokenClientCredentialsGrant(scopes);
+            final var scopesToUse = StringUtils.isBlank(scopes) ? null : scopes;
+            return getService().getAccessTokenClientCredentialsGrant(scopesToUse);
         } catch (OAuth2AccessTokenErrorResponse e) {
             throw wrapAccessTokenErrorResponse(e);
         }

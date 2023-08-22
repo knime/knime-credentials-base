@@ -87,7 +87,7 @@ abstract class FlowBase {
      * Performs the actual login.
      *
      * @param scopes
-     *            The OAuth2 scopes to request.
+     *            The OAuth2 scopes to request. May be null.
      * @return the {@link OAuth2AccessToken} if the login was successful.
      * @throws Exception
      *             if the login failed.
