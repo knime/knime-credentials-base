@@ -62,6 +62,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.core.util.DesktopUtil;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -106,7 +107,7 @@ public class AuthCodeFlow extends FlowBase {
      * cache and listener is disposed.
      *
      * @param scopes
-     *            The scopes to request for the access token.
+     *            The scopes to request for the access token. May be null.
      * @return the {@link OAuth2AccessToken} if the login was successful.
      * @throws Exception
      *             if the login failed for some reason.
@@ -117,10 +118,12 @@ public class AuthCodeFlow extends FlowBase {
         // state parameter that associates authorization request with redirect response
         m_state = UUID.randomUUID().toString().replace("-", "");
 
-        final var authorizationUrl = getService().createAuthorizationUrlBuilder()//
-                .scope(scopes)//
-                .state(m_state)//
-                .build();
+        var urlBuilder = getService().createAuthorizationUrlBuilder()//
+                .state(m_state);
+
+        if (!StringUtils.isBlank(scopes)) {
+            urlBuilder = urlBuilder.scope(scopes);
+        }
 
         m_authCodeFuture = new CompletableFuture<>();
 
@@ -128,7 +131,7 @@ public class AuthCodeFlow extends FlowBase {
 
         final String authCode;
         try {
-            DesktopUtil.browse(new URL(authorizationUrl));
+            DesktopUtil.browse(new URL(urlBuilder.build()));
             authCode = m_authCodeFuture.get(1, TimeUnit.MINUTES);
         } catch (ExecutionException e) { // NOSONAR this is just a wrapper
             throw (Exception) e.getCause();

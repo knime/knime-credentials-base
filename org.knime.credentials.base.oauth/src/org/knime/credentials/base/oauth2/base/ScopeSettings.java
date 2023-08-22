@@ -98,8 +98,8 @@ public class ScopeSettings implements LayoutGroup, DefaultNodeSettings {
      *             invalid.
      */
     public void validate() throws InvalidSettingsException {
-        if (m_scopes == null || m_scopes.length == 0) {
-            throw new InvalidSettingsException("Please specify at least one scope");
+        if (m_scopes == null) {
+            return;
         }
 
         var pos = 1;
