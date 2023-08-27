@@ -54,7 +54,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.knime.credentials.base.Credential;
@@ -105,22 +104,20 @@ public final class CredentialFactory {
                     tokenType, //
                     expiresAfter,
                     idToken, //
-                    refreshToken,//
-                    createTokenRefresher(serviceSupplier));
+                    createTokenRefresher(refreshToken, serviceSupplier));
         } catch (ParseException ignored) {
             return new AccessTokenCredential(accessToken, //
-                    refreshToken, //
                     expiresAfter, //
                     tokenType, //
-                    createTokenRefresher(serviceSupplier));
+                    createTokenRefresher(refreshToken, serviceSupplier));
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Credential> Function<String, T> createTokenRefresher(
+    private static <T extends Credential> Supplier<T> createTokenRefresher(final String refreshToken,
             final Supplier<OAuth20Service> serviceSupplier) {
 
-        return refreshToken -> { // NOSONAR
+        return () -> { // NOSONAR
             try (var service = serviceSupplier.get()) {
                 var scribeToken = service.refreshAccessToken(refreshToken);
                 return (T) fromScribeToken(scribeToken, serviceSupplier);

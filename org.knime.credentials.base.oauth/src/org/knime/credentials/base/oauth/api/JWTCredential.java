@@ -57,9 +57,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
@@ -94,9 +93,7 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
 
     private JWT m_idToken;
 
-    private JWT m_refreshToken;
-
-    private Function<String, JWTCredential> m_tokenRefresher;
+    private Supplier<JWTCredential> m_tokenRefresher;
 
     /**
      * Default constructor for ser(de).
@@ -113,12 +110,8 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
      *            The instant when the access token expires. May be null.
      * @param idToken
      *            The id token. May be null.
-     * @param refreshToken
-     *            The refresh token. May be null, however if given, then also an
-     *            accessTokenRefresher must be given.
      * @param tokenRefresher
-     *            Function that uses the refresh token to retrieve a new access
-     *            token.
+     *            Function that retrieves a new access token. May be null.
      * @throws ParseException
      *
      */
@@ -126,8 +119,7 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
             final String tokenType, //
             final Instant expiresAfter, //
             final String idToken, //
-            final String refreshToken, //
-            final Function<String, JWTCredential> tokenRefresher) throws ParseException {
+            final Supplier<JWTCredential> tokenRefresher) throws ParseException {
 
         if (StringUtils.isBlank(accessToken)) {
             throw new IllegalArgumentException("Access token must not be blank");
@@ -147,19 +139,12 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
             m_idToken = new JWT(idToken);
         }
 
-        if (refreshToken != null) {
-            m_refreshToken = new JWT(refreshToken);
-            m_tokenRefresher = Objects.requireNonNull(tokenRefresher,
-                    "If a refresh token is provided, a tokenRefresher must also be given.");
+        m_tokenRefresher = tokenRefresher;
 
-            // if the service has provided a refresh token, but we cannot determine when the
-            // access token expires, then we will refresh the access token every 60 seconds.
-            if (m_expiresAfter == null) {
-                m_expiresAfter = Instant.now().plusSeconds(60);
-            }
-        } else {
-            m_refreshToken = null;
-            m_tokenRefresher = null;
+        // if the service has provided a refresh token, but we cannot determine when the
+        // access token expires, then we will refresh the access token every 60 seconds.
+        if (m_tokenRefresher != null && m_expiresAfter == null) {
+            m_expiresAfter = Instant.now().plusSeconds(60);
         }
     }
 
@@ -197,23 +182,11 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
         return Optional.ofNullable(m_idToken);
     }
 
-    /**
-     * Returns the refresh token. The access token is refreshed if necessary.
-     *
-     * @return The optional holding the refresh token.
-     * @throws IOException
-     *             May be thrown during token refresh.
-     */
-    public Optional<JWT> getRefreshToken() throws IOException {
-        refreshTokenIfNeeded();
-        return Optional.ofNullable(m_refreshToken);
-    }
-
     private void refreshTokenIfNeeded() throws IOException {
-        if (m_refreshToken != null && m_expiresAfter.isBefore(Instant.now())) {
+        if (m_tokenRefresher != null && m_expiresAfter.isBefore(Instant.now())) {
 
             try {
-                final var refreshedCredential = m_tokenRefresher.apply(m_refreshToken.asString());
+                final var refreshedCredential = m_tokenRefresher.get();
 
                 if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
                     throw new IOException(
@@ -226,8 +199,8 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
                 m_expiresAfter = refreshedCredential.m_expiresAfter;
                 m_idToken = refreshedCredential.m_idToken;
 
-                if (refreshedCredential.m_refreshToken != null) {
-                    m_refreshToken = refreshedCredential.m_refreshToken;
+                if (refreshedCredential.m_tokenRefresher != null) {
+                    m_tokenRefresher = refreshedCredential.m_tokenRefresher;
                 }
             } catch (UncheckedIOException e) { // NOSONAR this is just a wrapper
                 throw e.getCause();
@@ -256,18 +229,14 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
 
         try {
             sections.add(
-                    new Section(String.format("Access token (type: %s)", m_tokenType), describe(getAccessToken())));
+                    new Section(String.format("Access token (type: %s, refreshable: %s)", m_tokenType,
+                            m_tokenRefresher != null), describe(getAccessToken())));
 
             if (getIdToken().isPresent()) {
                 sections.add(new Section("ID token", describe(getIdToken().orElseThrow())));
             }
-
-            if (getRefreshToken().isPresent()) {
-                sections.add(new Section("Refresh token", describe(getRefreshToken().orElseThrow())));
-            }
         } catch (IOException ex) {// NOSONAR error message is attached to description
-            sections.add(
-                    new Section("Error", new String[][] { { "message", ex.getMessage() } }));
+            sections.add(new Section("Error", new String[][] { { "message", ex.getMessage() } }));
         }
         return new CredentialPortViewData(sections);
     }

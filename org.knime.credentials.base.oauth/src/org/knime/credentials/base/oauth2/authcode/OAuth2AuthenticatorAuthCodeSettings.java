@@ -51,14 +51,10 @@ package org.knime.credentials.base.oauth2.authcode;
 import java.net.URI;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
@@ -68,7 +64,8 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
-import org.knime.credentials.base.CredentialCache;
+import org.knime.credentials.base.GenericTokenHolder;
+import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
@@ -150,8 +147,8 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     static class LoginActionHandler extends CancelableActionHandler<UUID, OAuth2AuthenticatorAuthCodeSettings> {
 
         @Override
-        protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings, final DefaultNodeSettingsContext context)
-                throws WidgetHandlerException {
+        protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
+                final DefaultNodeSettingsContext context) throws WidgetHandlerException {
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
@@ -159,10 +156,8 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
             }
 
             try {
-                var tokenHolder = new OAuth2AccessTokenHolder();
-                tokenHolder.m_token = fetchAccessToken(settings, context);
-                tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
-                return tokenHolder.m_cacheKey;
+                var tokenHolder = GenericTokenHolder.store(fetchAccessToken(settings, context));
+                return tokenHolder.getCacheKey();
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
                 throw new WidgetHandlerException(e.getMessage());
@@ -171,16 +166,11 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
         @Override
         protected String getButtonText(final States state) {
-            switch (state) {
-            case READY:
-                return "Login";
-            case CANCEL:
-                return "Cancel login";
-            case DONE:
-                return "Login again";
-            default:
-                return null;
-            }
+            return switch (state) {
+            case READY -> "Login";
+            case CANCEL -> "Cancel login";
+            case DONE -> "Login again";
+            };
         }
 
     }
@@ -230,31 +220,6 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         builder.callback(m_redirectUrl);
 
         return builder.build(api);
-    }
-
-    private static class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<UUID> {
-
-        @Override
-        public UUID load(final NodeSettingsRO settings) throws InvalidSettingsException {
-            if (settings.containsKey(getConfigKey())) {
-                var uuidStr = settings.getString(getConfigKey());
-                if (!StringUtils.isBlank(uuidStr)) {
-                    final var uuid = UUID.fromString(uuidStr);
-                    if (CredentialCache.get(uuid).isPresent()) {
-                        return uuid;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        public void save(final UUID uuid, final NodeSettingsWO settings) {
-            if (uuid != null) {
-                settings.addString(getConfigKey(), uuid.toString());
-            }
-        }
     }
 
     void validate(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {

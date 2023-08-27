@@ -54,9 +54,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
@@ -89,19 +88,20 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
 
     private Instant m_expiresAfter;
 
-    private String m_refreshToken;
-
-    private Function<String, AccessTokenCredential> m_tokenRefresher;
+    private Supplier<AccessTokenCredential> m_tokenRefresher;
 
     /**
      * @param accessToken
-     * @param refreshToken
+     *            The access token.
      * @param expiresAfter
+     *            The instant when the access token expires. May be null.
      * @param tokenType
+     *            The type of access token, e.g. "bearer".
      * @param tokenRefresher
+     *            Function that retrieves a new access token. May be null.
      */
-    public AccessTokenCredential(final String accessToken, final String refreshToken, final Instant expiresAfter,
-            final String tokenType, final Function<String, AccessTokenCredential> tokenRefresher) {
+    public AccessTokenCredential(final String accessToken, final Instant expiresAfter, final String tokenType,
+            final Supplier<AccessTokenCredential> tokenRefresher) {
 
         if (StringUtils.isBlank(accessToken)) {
             throw new IllegalArgumentException("Access token must not be blank");
@@ -114,19 +114,12 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
         m_accessToken = accessToken;
         m_tokenType = tokenType;
         m_expiresAfter = expiresAfter;
+        m_tokenRefresher = tokenRefresher;
 
-        if (refreshToken != null) {
-            m_refreshToken = refreshToken;
-            m_tokenRefresher = Objects.requireNonNull(tokenRefresher,
-                    "If a refresh token is provided, a tokenRefresher must also be given.");
-            // if the service has provided a refresh token, but we cannot determine when the
-            // access token expires, then we will refresh the access token every 60 seconds.
-            if (m_expiresAfter == null) {
-                m_expiresAfter = Instant.now().plusSeconds(60);
-            }
-        } else {
-            m_refreshToken = null;
-            m_tokenRefresher = null;
+        // if the service has provided a refresh token, but we cannot determine when the
+        // access token expires, then we will refresh the access token every 60 seconds.
+        if (m_tokenRefresher != null && m_expiresAfter == null) {
+            m_expiresAfter = Instant.now().plusSeconds(60);
         }
     }
 
@@ -144,10 +137,10 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
     }
 
     private void refreshTokenIfNeeded() throws IOException {
-        if (m_refreshToken != null && m_expiresAfter.isBefore(Instant.now())) {
+        if (m_tokenRefresher != null && m_expiresAfter.isBefore(Instant.now())) {
 
             try {
-                final var refreshedCredential = m_tokenRefresher.apply(m_refreshToken);
+                final var refreshedCredential = m_tokenRefresher.get();
 
                 if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
                     throw new IOException(
@@ -159,8 +152,8 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
                 m_accessToken = refreshedCredential.m_accessToken;
                 m_expiresAfter = refreshedCredential.m_expiresAfter;
 
-                if (refreshedCredential.m_refreshToken != null) {
-                    m_refreshToken = refreshedCredential.m_refreshToken;
+                if (refreshedCredential.m_tokenRefresher != null) {
+                    m_tokenRefresher = refreshedCredential.m_tokenRefresher;
                 }
 
             } catch (UncheckedIOException e) { // NOSONAR just a wrapper
@@ -208,12 +201,9 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
                 { "Token type", m_tokenType }, //
                 { "Expires after", m_expiresAfter != null//
                         ? m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME)
-                        : "n/a" } }));
-
-        if (m_refreshToken != null) {
-            sections.add(new CredentialPortViewData.Section("Refresh token",
-                    new String[][] { { "Token", obfuscate(m_refreshToken) } }));
-        }
+                        : "n/a" }, //
+                { "Is refreshable", Boolean.toString(m_tokenRefresher != null) }, //
+        }));
 
         return new CredentialPortViewData(sections);
     }

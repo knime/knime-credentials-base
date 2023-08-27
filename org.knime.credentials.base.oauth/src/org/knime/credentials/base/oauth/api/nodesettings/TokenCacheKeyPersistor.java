@@ -44,71 +44,47 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-06-07 (Alexander Bondaletov, Redfield SE): created
+ *   2023-08-24 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.credentials.base.oauth2.authcode;
+package org.knime.credentials.base.oauth.api.nodesettings;
 
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
 import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.GenericTokenHolder;
-import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorNodeModel;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
 
 /**
- * Node model of the (interactive) OAuth2 authenticator node. Performs OAuth
- * authentication using the Auth code or implicit grant and produces credential
- * port object with {@link JWTCredential}.
+ * The node settings persistor for the {@link UUID} pointing to
+ * {@link CredentialCache}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-final class OAuth2AuthenticatorAuthCodeNodeModel
-        extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorAuthCodeSettings> {
-
-    private static final String LOGIN_FIRST_ERROR = "Please use the configuration dialog to log in first.";
-
-    private GenericTokenHolder<OAuth2AccessToken> m_tokenHolder;
-
-    /**
-     * @param configuration
-     *            The node configuration.
-     */
-    protected OAuth2AuthenticatorAuthCodeNodeModel(final WebUINodeConfiguration configuration) {
-        super(configuration, OAuth2AuthenticatorAuthCodeSettings.class);
-    }
+public class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<UUID> {
 
     @Override
-    protected void validateOnConfigure(final PortObjectSpec[] inSpecs,
-            final OAuth2AuthenticatorAuthCodeSettings settings) throws InvalidSettingsException {
-
-        settings.validate(getCredentialsProvider());
-
-        if (settings.m_tokenCacheKey == null) {
-            throw new InvalidSettingsException(LOGIN_FIRST_ERROR);
-        } else {
-            m_tokenHolder = CredentialCache.<GenericTokenHolder<OAuth2AccessToken>>get(settings.m_tokenCacheKey)//
-                    .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
+    public UUID load(final NodeSettingsRO settings) throws InvalidSettingsException {
+        if (settings.containsKey(getConfigKey())) {
+            var uuidStr = settings.getString(getConfigKey());
+            if (!StringUtils.isBlank(uuidStr)) {
+                final var uuid = UUID.fromString(uuidStr);
+                if (CredentialCache.get(uuid).isPresent()) {
+                    return uuid;
+                }
+            }
         }
+
+        return null;
     }
 
     @Override
-    protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
-            final OAuth20Service service) throws Exception {
-        return m_tokenHolder.getToken();
-    }
-
-    @Override
-    protected void onDisposeInternal() {
-        // dispose of the scribejava token that was retrieved interactively in the node
-        // dialog
-        if (m_tokenHolder != null) {
-            CredentialCache.delete(m_tokenHolder.getCacheKey());
-            m_tokenHolder = null;
+    public void save(final UUID uuid, final NodeSettingsWO settings) {
+        if (uuid != null) {
+            settings.addString(getConfigKey(), uuid.toString());
         }
     }
 }

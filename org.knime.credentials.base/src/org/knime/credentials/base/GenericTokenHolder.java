@@ -46,31 +46,63 @@
  * History
  *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.authcode;
+package org.knime.credentials.base;
 
 import java.util.Collections;
 import java.util.UUID;
 
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortViewData;
-import org.knime.credentials.base.CredentialType;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
-
 /**
- * Dummy credential that can hold a scribejava {@link OAuth2AccessToken}. The
- * sole purpose of this class is to pass a {@link OAuth2AccessToken} created in
- * the OAuth2 Authenticator node dialog to the node model, using the
- * {@link CredentialCache}.
+ * Dummy credential that can hold any generic token (like a scribejava
+ * OAuth2AccessToken). The sole purpose of this class is to pass the token
+ * between different classes using the {@link CredentialCache}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
+ * @param <T>
+ *            The actual type of the token stored.
  */
-final class OAuth2AccessTokenHolder implements Credential {
+public final class GenericTokenHolder<T> implements Credential {
 
-    UUID m_cacheKey;
+    private UUID m_cacheKey;
 
-    OAuth2AccessToken m_token;
+    private final T m_token;
+
+    /**
+     * Wraps the token with the {@link GenericTokenHolder} and stores the
+     * result in the credential cache.
+     *
+     * @param <T>
+     *            The actual type of the token.
+     * @param token
+     *            The token to store.
+     * @return The stored token holder object.
+     */
+    public static <T> GenericTokenHolder<T> store(final T token) {
+        var holder = new GenericTokenHolder<>(token);
+        holder.m_cacheKey = CredentialCache.store(holder);
+        return holder;
+    }
+
+    /**
+     * @param token
+     *            The token to store.
+     */
+    public GenericTokenHolder(final T token) {
+        m_token = token;
+    }
+
+    /**
+     * @return the cacheKey
+     */
+    public UUID getCacheKey() {
+        return m_cacheKey;
+    }
+
+    /**
+     * @return the token
+     */
+    public T getToken() {
+        return m_token;
+    }
 
     @Override
     public CredentialType getType() {
