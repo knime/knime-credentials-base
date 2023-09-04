@@ -50,7 +50,6 @@ package org.knime.credentials.base;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
@@ -69,7 +68,7 @@ import org.knime.core.node.port.PortTypeRegistry;
  * @author Alexander Bondaletov, Redfield SE
  */
 public class CredentialPortObject extends AbstractSimplePortObject {
-    private static final String KEY_CACHE_ID = "cacheId";
+
 
     /**
      * Serializer class
@@ -84,14 +83,12 @@ public class CredentialPortObject extends AbstractSimplePortObject {
     public static final PortType TYPE = PortTypeRegistry.getInstance().getPortType(CredentialPortObject.class);
 
     private CredentialPortObjectSpec m_spec;
-    private UUID m_cacheId;
 
     /**
      * Public constructor (only for deserialization).
      */
     public CredentialPortObject() {
         m_spec = null;
-        m_cacheId = null;
     }
 
     /**
@@ -99,16 +96,12 @@ public class CredentialPortObject extends AbstractSimplePortObject {
      *
      * @param spec
      *            The spec.
-     * @param cacheId
-     *            The cache id.
-     *
      */
-    public CredentialPortObject(final CredentialPortObjectSpec spec, final UUID cacheId) {
+    public CredentialPortObject(final CredentialPortObjectSpec spec) {
         if (spec.getCredentialType().isEmpty()) {
             throw new IllegalArgumentException("Credential type of spec must be known");
         }
         m_spec = spec;
-        m_cacheId = cacheId;
     }
 
     /**
@@ -127,7 +120,7 @@ public class CredentialPortObject extends AbstractSimplePortObject {
      * @return The credential stored in the credential cache.
      */
     public <T extends Credential> Optional<T> getCredential(final Class<T> credentialClass) {
-        return CredentialCache.get(m_cacheId);
+        return m_spec.getCredential(credentialClass);
     }
 
     @Override
@@ -142,14 +135,13 @@ public class CredentialPortObject extends AbstractSimplePortObject {
 
     @Override
     protected void save(final ModelContentWO model, final ExecutionMonitor exec) throws CanceledExecutionException {
-        model.addString(KEY_CACHE_ID, m_cacheId.toString());
+        // nothing to save, all information is in the spec
     }
 
     @Override
     protected void load(final ModelContentRO model, final PortObjectSpec spec, final ExecutionMonitor exec)
             throws InvalidSettingsException, CanceledExecutionException {
         m_spec = (CredentialPortObjectSpec) spec;
-        m_cacheId = UUID.fromString(model.getString(KEY_CACHE_ID));
     }
 
     @Override
@@ -167,11 +159,11 @@ public class CredentialPortObject extends AbstractSimplePortObject {
         }
 
         final var other = (CredentialPortObject) obj;
-        return Objects.equals(m_spec, other.m_spec) && Objects.equals(m_cacheId, other.m_cacheId);
+        return Objects.equals(m_spec, other.m_spec);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(m_spec, m_cacheId);
+        return Objects.hash(m_spec);
     }
 }

@@ -130,7 +130,7 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
     @SuppressWarnings("static-method")
     protected CredentialPortObjectSpec createSpecInConfigure(final PortObjectSpec[] inSpecs,
             final T modelSettings) {
-        return new CredentialPortObjectSpec(null);
+        return new CredentialPortObjectSpec();
     }
 
     /**
@@ -158,8 +158,8 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
         validateOnExecute(inObjects, settings);
         var credential = createCredential(inObjects, exec, settings);
         m_credentialCacheKey = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(new CredentialPortObjectSpec(credential.getType()), //
-                m_credentialCacheKey) };
+        return new PortObject[] {
+                new CredentialPortObject(new CredentialPortObjectSpec(credential.getType(), m_credentialCacheKey)) };
     }
 
     /**

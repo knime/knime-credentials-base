@@ -50,6 +50,7 @@ package org.knime.credentials.base;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
@@ -70,21 +71,36 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
 
     private static final String KEY_TYPE = "type";
 
+    private static final String KEY_CACHE_ID = "cacheId";
+
     private CredentialType m_credentialType;
+
+    private UUID m_cacheId;
 
     /**
      * Creates new instance.
      */
     public CredentialPortObjectSpec() {
-        this(null);
+        this(null, null);
     }
 
     /**
+     * Creates a new instance. During node mode configure() it is okay to call this
+     * method with one or both arguments null. During
+     *
      * @param credentialType
-     *            The credential type. May be null, if currently unknown.
+     *            The credential type. May be null, but then cacheId must also be
+     *            null.
+     * @param cacheId
+     *            The cache id. May be null, if currently unknown.
      */
-    public CredentialPortObjectSpec(final CredentialType credentialType) {
+    public CredentialPortObjectSpec(final CredentialType credentialType, final UUID cacheId) {
+        if (credentialType == null && cacheId != null) {
+            throw new IllegalArgumentException("If cacheId is given, then the credential type must be known");
+        }
+
         m_credentialType = credentialType;
+        m_cacheId = cacheId;
     }
 
     /**
@@ -95,9 +111,21 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
         return Optional.ofNullable(m_credentialType);
     }
 
+    /**
+     * @param <T>
+     *            The credential class.
+     * @param credentialClass
+     *            The credential class.
+     * @return The credential stored in the credential cache.
+     */
+    public <T extends Credential> Optional<T> getCredential(final Class<T> credentialClass) {
+        return CredentialCache.get(m_cacheId);
+    }
+
     @Override
     protected void save(final ModelContentWO model) {
         model.addString(KEY_TYPE, getCredentialType().map(CredentialType::getId).orElse(null));
+        model.addString(KEY_CACHE_ID, m_cacheId.toString());
     }
 
     @Override
@@ -105,6 +133,13 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
         m_credentialType = Optional.ofNullable(model.getString(KEY_TYPE))//
                 .map(CredentialTypeRegistry::getCredentialType)//
                 .orElse(null);
+
+        // ´the cacheId was moved from port object to port object spec with AP 5.2
+        if (model.containsKey(KEY_CACHE_ID)) {
+            m_cacheId = UUID.fromString(model.getString(KEY_CACHE_ID));
+        } else {
+            m_cacheId = null;
+        }
     }
 
     @Override
@@ -122,11 +157,11 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
         }
 
         final var spec = (CredentialPortObjectSpec) ospec;
-        return Objects.equals(m_credentialType, spec.m_credentialType);
+        return Objects.equals(m_credentialType, spec.m_credentialType) && Objects.equals(m_cacheId, spec.m_cacheId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(m_credentialType);
+        return Objects.hash(m_credentialType, m_cacheId);
     }
 }
