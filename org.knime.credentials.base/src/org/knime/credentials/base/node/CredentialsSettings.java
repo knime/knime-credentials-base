@@ -130,13 +130,22 @@ public interface CredentialsSettings extends DefaultNodeSettings, LayoutGroup {
      *             when validation failed.
      */
     default void validateFlowVariable(final CredentialsProvider credsProvider) throws InvalidSettingsException {
-        if (StringUtils.isBlank(flowVariableName())) {
-            throw new InvalidSettingsException("Please specify a credentials flow variable.");
-        }
-
+        validateFlowVariableIsSet();
         if (retrieve(credsProvider).isEmpty()) {
             throw new InvalidSettingsException(
                     String.format("The chosen credentials flow variable '%s' does not exist.", flowVariableName()));
+        }
+    }
+
+    /**
+     * Validates that a flow variable was specified.
+     *
+     * @throws InvalidSettingsException
+     *             when validation failed.
+     */
+    default void validateFlowVariableIsSet() throws InvalidSettingsException {
+        if (StringUtils.isBlank(flowVariableName())) {
+            throw new InvalidSettingsException("Please specify a credentials flow variable.");
         }
     }
 

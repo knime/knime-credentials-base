@@ -95,6 +95,7 @@ public class ConfidentialAppSettings implements CredentialsSettings {
      *             when username or password was not present in the flow variable.
      */
     public void validateOnConfigure(final CredentialsProvider credsProvider) throws InvalidSettingsException {
+        validateFlowVariableIsSet();
         if (retrieve(credsProvider).isPresent()) {
             validateLogin(credsProvider, "Client/App ID is required");
             validateSecret(credsProvider, "Client/App secret is required");
