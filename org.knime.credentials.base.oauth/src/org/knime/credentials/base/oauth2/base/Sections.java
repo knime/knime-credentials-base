@@ -49,7 +49,6 @@
 package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
 
 /**
@@ -70,20 +69,21 @@ public class Sections {
         /**
          * Subsection to place an optional service type chooser.
          */
-        @Before(Standard.class)
-        @Before(Custom.class)
+
         interface TypeChooser {
         }
 
         /**
          * Subsection to place an optional standard service chooser.
          */
+        @After(TypeChooser.class)
         interface Standard {
         }
 
         /**
          * Subsection for custom service configuration.
          */
+        @After(Standard.class)
         interface Custom {
             interface Top {
             }
@@ -107,20 +107,20 @@ public class Sections {
         /**
          * Subsection to place an optional app type chooser.
          */
-        @Before(Public.class)
-        @Before(Confidential.class)
         interface TypeChooser {
         }
 
         /**
          * Subsection to place public app configuration.
          */
+        @After(TypeChooser.class)
         interface Public {
         }
 
         /**
          * Subsection to place confidential app configuration.
          */
+        @After(Public.class)
         interface Confidential {
         }
 
@@ -128,7 +128,6 @@ public class Sections {
          * Subsection to place additional app configuration which is displayed at the
          * bottom.
          */
-        @After(Public.class)
         @After(Confidential.class)
         interface Bottom {
         }
