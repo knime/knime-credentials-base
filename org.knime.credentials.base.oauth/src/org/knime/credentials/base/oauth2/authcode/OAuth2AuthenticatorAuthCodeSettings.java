@@ -65,9 +65,9 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.credentials.base.GenericTokenHolder;
+import org.knime.credentials.base.node.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
@@ -114,6 +114,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
     PublicAppSettings m_publicApp = new PublicAppSettings();
 
+    @Layout(AppSection.Confidential.class)
     ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """

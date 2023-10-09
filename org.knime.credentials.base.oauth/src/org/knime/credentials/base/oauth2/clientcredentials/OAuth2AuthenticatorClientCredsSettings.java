@@ -63,10 +63,11 @@ import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.node.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
+import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
@@ -100,6 +101,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     @Signal(condition = IsPublicApp.class)
     AppType m_hiddenAppType = AppType.CONFIDENTIAL;
 
+    @Layout(AppSection.Confidential.class)
     ConfidentialAppSettings m_app = new ConfidentialAppSettings();
 
     ScopeSettings m_scopes = new ScopeSettings();

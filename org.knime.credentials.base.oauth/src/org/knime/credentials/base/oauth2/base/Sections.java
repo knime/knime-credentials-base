@@ -49,7 +49,11 @@
 package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
+import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
 
 /**
  * Specifies Web UI sections for the family of OAuth2 Authenticator nodes. Not
@@ -121,6 +125,8 @@ public class Sections {
          * Subsection to place confidential app configuration.
          */
         @After(Public.class)
+        @HorizontalLayout
+        @Effect(signals = IsPublicApp.class, type = EffectType.HIDE)
         interface Confidential {
         }
 

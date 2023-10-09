@@ -46,18 +46,12 @@
  * History
  *   2023-06-29 (bjoern): created
  */
-package org.knime.credentials.base.oauth2.base;
+package org.knime.credentials.base.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.credentials.base.node.CredentialsSettings;
-import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
-import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 
 /**
  * Implementation of {@link CredentialsSettings} to supply the ID and secret of
@@ -71,11 +65,9 @@ public class ConfidentialAppSettings implements CredentialsSettings {
     /**
      * The name of the Credentials flow variable.
      */
-    @Layout(AppSection.Confidential.class)
     @Widget(title = "Client/App ID and secret (flow variable)", //
             description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
     @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
-    @Effect(signals = IsPublicApp.class, type = EffectType.HIDE)
     public String m_flowVariable;
 
     @Override

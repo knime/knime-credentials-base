@@ -58,8 +58,8 @@ import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.node.ConfidentialAppSettings;
 import org.knime.credentials.base.node.UsernamePasswordSettings;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
@@ -99,6 +99,7 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
 
     PublicAppSettings m_publicApp = new PublicAppSettings();
 
+    @Layout(AppSection.Confidential.class)
     ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
 
     @Layout(UsernamePasswordSection.class)
