@@ -48,6 +48,8 @@
  */
 package org.knime.credentials.base.oauth.api;
 
+import static org.knime.credentials.base.CredentialPortViewUtil.obfuscate;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
@@ -206,9 +208,5 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
         }));
 
         return new CredentialPortViewData(sections);
-    }
-
-    private static String obfuscate(final String toObfuscate) {
-        return toObfuscate.substring(0, 2) + "*".repeat(toObfuscate.length() - 2);
     }
 }

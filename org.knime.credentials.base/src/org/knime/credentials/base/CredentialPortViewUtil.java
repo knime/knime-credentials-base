@@ -44,38 +44,30 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-07-03 (bjoern): created
+ *   2023-10-13 (bjoern): created
  */
 package org.knime.credentials.base;
 
-import java.util.List;
-
-import org.knime.credentials.base.CredentialPortViewData.Section;
-
 /**
- * A simple data structure to describe the contents of a {@link Credential} in a
- * port view. The idea of the port view is to display one HTML table per
- * section.
+ * Utility methods for displaying {@link Credential}s in a port view (see
+ * {@link CredentialPortViewData}).
  *
- * @author Bjoern Lohrmann, KNIME GmbH
- *
- * @param sections
- *            The sections of the information to display.
+ * @author Bjoern Lohrman, KNIME GmbH
  */
-public record CredentialPortViewData(List<Section> sections) {
+public final class CredentialPortViewUtil {
+
+    private CredentialPortViewUtil() {
+    }
 
     /**
-     * Describe a section of a {@link Credential} port view. A section has a title
-     * and a columns array, that will be displayed as a table. The values in the
-     * first row will be used as column headers.
+     * Obfuscates/masks the given string. This is a utility method for obfuscating
+     * confidential fields when displaying {@link Credential}s in a port view (see
+     * {@link CredentialPortViewData}).
      *
-     * @param title
-     *            The title of the section.
-     * @param columns
-     *            Information which will be displayed in a table, i.e. columns[0] is
-     *            the first row. The values in the first row will be used as column
-     *            headers.
+     * @param toObfuscate
+     * @return an obfuscated/masked string of same length.
      */
-    public static record Section(String title, String[][] columns) { // NOSONAR
+    public static String obfuscate(final String toObfuscate) {
+        return "*".repeat(toObfuscate.length());
     }
 }
