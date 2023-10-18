@@ -53,9 +53,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.node.UsernamePasswordSettings;
@@ -83,11 +81,6 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
     @Before(ScopesSection.class)
     interface UsernamePasswordSection {
     }
-
-    @Hidden
-    @Persist(hidden = true, optional = true)
-    @Signal(condition = IsStandardService.class)
-    ServiceType m_hiddenServiceType = ServiceType.CUSTOM;
 
     TokenEndpointSettings m_service = new TokenEndpointSettings();
 

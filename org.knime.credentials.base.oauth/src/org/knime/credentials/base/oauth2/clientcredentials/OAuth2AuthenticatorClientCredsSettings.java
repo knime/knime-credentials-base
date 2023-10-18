@@ -58,10 +58,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Hidden;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
@@ -88,17 +85,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     public interface AdditionalFieldsSection {
     }
 
-    @Hidden
-    @Persist(hidden = true, optional = true)
-    @Signal(condition = IsStandardService.class)
-    ServiceType m_hiddenServiceType = ServiceType.CUSTOM;
-
     TokenEndpointSettings m_service = new TokenEndpointSettings();
-
-    @Hidden
-    @Persist(hidden = true, optional = true)
-    @Signal(condition = IsPublicApp.class)
-    AppType m_hiddenAppType = AppType.CONFIDENTIAL;
 
     ConfidentialAppSettings m_app = new ConfidentialAppSettings();
 

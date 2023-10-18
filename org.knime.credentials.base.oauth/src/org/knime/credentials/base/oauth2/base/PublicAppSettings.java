@@ -66,6 +66,8 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
+@Effect(signals = IsPublicApp.class, type = EffectType.SHOW, ignoreOnMissingSignals = true)
+@Layout(AppSection.Public.class)
 public class PublicAppSettings implements DefaultNodeSettings, LayoutGroup {
 
     /**
@@ -73,8 +75,6 @@ public class PublicAppSettings implements DefaultNodeSettings, LayoutGroup {
      */
     @Widget(title = "Client/App ID", description = "The client/application ID. In some "
             + "services this is called API key.")
-    @Layout(AppSection.Public.class)
-    @Effect(signals = IsPublicApp.class, type = EffectType.SHOW)
     public String m_appId;
 
     /**

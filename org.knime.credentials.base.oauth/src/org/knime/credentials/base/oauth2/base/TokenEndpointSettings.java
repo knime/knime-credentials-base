@@ -74,6 +74,7 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
+@Effect(signals = IsStandardService.class, type = EffectType.HIDE, ignoreOnMissingSignals = true)
 public class TokenEndpointSettings implements DefaultNodeSettings, LayoutGroup {
 
     /**
@@ -81,7 +82,6 @@ public class TokenEndpointSettings implements DefaultNodeSettings, LayoutGroup {
      */
     @Widget(title = "Token endpoint URL", description = "The token endpoint URL of the OAuth2 service.")
     @Layout(ServiceSection.Custom.Middle.class)
-    @Effect(signals = IsStandardService.class, type = EffectType.HIDE)
     public String m_tokenUrl;
 
     /**
@@ -92,7 +92,6 @@ public class TokenEndpointSettings implements DefaultNodeSettings, LayoutGroup {
             advanced = true)
     @Layout(ServiceSection.Custom.Bottom.class)
     @ValueSwitchWidget
-    @Effect(signals = IsStandardService.class, type = EffectType.HIDE)
     public HttpRequestMethod m_tokenRequestMethod = HttpRequestMethod.POST;
 
     /**
@@ -107,7 +106,6 @@ public class TokenEndpointSettings implements DefaultNodeSettings, LayoutGroup {
             advanced = true)
     @Layout(ServiceSection.Custom.Bottom.class)
     @ValueSwitchWidget
-    @Effect(signals = IsStandardService.class, type = EffectType.HIDE)
     public ClientAuthenticationType m_clientAuthMechanism = ClientAuthenticationType.HTTP_BASIC_AUTH;
 
     /**

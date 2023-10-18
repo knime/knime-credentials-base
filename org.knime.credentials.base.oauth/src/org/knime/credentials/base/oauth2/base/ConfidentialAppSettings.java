@@ -66,16 +66,16 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
+@Effect(signals = IsPublicApp.class, type = EffectType.HIDE, ignoreOnMissingSignals = true)
+@Layout(AppSection.Confidential.class)
 public class ConfidentialAppSettings implements CredentialsSettings {
 
     /**
      * The name of the Credentials flow variable.
      */
-    @Layout(AppSection.Confidential.class)
     @Widget(title = "Client/App ID and secret (flow variable)", //
             description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
     @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
-    @Effect(signals = IsPublicApp.class, type = EffectType.HIDE)
     public String m_flowVariable;
 
     @Override

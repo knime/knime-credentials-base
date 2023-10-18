@@ -56,8 +56,8 @@ import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
-import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsStandardService;
+import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
 import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
 /**
@@ -67,11 +67,11 @@ import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
+@Effect(signals = IsStandardService.class, type = EffectType.HIDE, ignoreOnMissingSignals = true)
 class CustomServiceSettings extends TokenEndpointSettings {
 
     @Widget(title = "Authorization endpoint URL", description = "The authorization endpoint URL of the OAuth service.")
     @Layout(ServiceSection.Custom.Top.class)
-    @Effect(signals = IsStandardService.class, type = EffectType.HIDE)
     String m_authorizationUrl;
 
     @Override
