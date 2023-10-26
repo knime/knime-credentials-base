@@ -48,6 +48,7 @@
  */
 package org.knime.credentials.base;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -60,6 +61,9 @@ import org.knime.core.node.port.AbstractSimplePortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.port.PortTypeRegistry;
+import org.knime.core.webui.node.port.PortViewManager;
+import org.knime.core.webui.node.port.PortViewManager.PortViewDescriptor;
+import org.knime.credentials.base.internal.PortViewFactories;
 
 /**
  * Port object providing access to a {@link Credential} stored in the in-memory
@@ -67,7 +71,23 @@ import org.knime.core.node.port.PortTypeRegistry;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
+@SuppressWarnings("restriction")
 public class CredentialPortObject extends AbstractSimplePortObject {
+
+    /**
+     * {@link PortType} of the {@link CredentialPortObject}.
+     */
+    @SuppressWarnings("hiding")
+    public static final PortType TYPE;
+
+    static {
+        TYPE = PortTypeRegistry.getInstance().getPortType(CredentialPortObject.class);
+        PortViewManager.registerPortViews(TYPE, //
+                List.of(new PortViewDescriptor("Credential", PortViewFactories.PORT_SPEC_VIEW_FACTORY), //
+                        new PortViewDescriptor("Credential", PortViewFactories.PORT_VIEW_FACTORY)), //
+                List.of(0), //
+                List.of(1));
+    }
 
 
     /**
@@ -79,8 +99,6 @@ public class CredentialPortObject extends AbstractSimplePortObject {
     /**
      * The type of this port.
      */
-    @SuppressWarnings("hiding")
-    public static final PortType TYPE = PortTypeRegistry.getInstance().getPortType(CredentialPortObject.class);
 
     private CredentialPortObjectSpec m_spec;
 

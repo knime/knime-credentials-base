@@ -71,11 +71,17 @@ import org.knime.credentials.base.CredentialPortObjectSpec;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-final class PortViewFactories {
+public final class PortViewFactories {
 
-    static final PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
+    /**
+     * {@link PortViewFactory} for the credential port object view.
+     */
+    public static final PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
 
-    static final PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = //
+    /**
+     * {@link PortSpecViewFactory} for the credential port object spec view.
+     */
+    public static final PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = //
             PortViewFactories::createPortSpecView;
 
     private PortViewFactories() {
