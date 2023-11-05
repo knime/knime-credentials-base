@@ -147,8 +147,12 @@ public class CredentialPortObject extends AbstractSimplePortObject {
     }
 
     @Override
-    public PortObjectSpec getSpec() {
+    public CredentialPortObjectSpec getSpec() {
         return m_spec;
+    }
+
+    public CredentialRef toRef() {
+        return getSpec().toRef();
     }
 
     @Override

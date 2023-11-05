@@ -104,6 +104,26 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
     }
 
     /**
+     * Sets the cache ID. Subclasses are only supposed to invoke this when loading
+     * legacy ports.
+     *
+     * @param cacheID
+     */
+    protected void setCacheId(final UUID cacheID) {
+        m_cacheId = cacheID;
+    }
+
+    /**
+     * Sets the credential type. Subclasses are only supposed to invoke this when
+     * loading legacy ports.
+     *
+     * @param credentialType
+     */
+    protected void setCredentialType(final CredentialType credentialType) {
+        m_credentialType = credentialType;
+    }
+
+    /**
      * @return the optional credentialType of the {@link Credential} the port object
      *         provides access to, which can be empty if currently unknown.
      */
@@ -122,24 +142,33 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
         return CredentialCache.get(m_cacheId);
     }
 
+    /**
+     * @return a new {@link CredentialRef} that references the same (cached)
+     *         credential.
+     */
+    public CredentialRef toRef() {
+        return Optional.ofNullable(m_cacheId)//
+                .map(CredentialRef::new)//
+                .orElse(new CredentialRef());
+    }
+
     @Override
     protected void save(final ModelContentWO model) {
         model.addString(KEY_TYPE, getCredentialType().map(CredentialType::getId).orElse(null));
-        model.addString(KEY_CACHE_ID, m_cacheId.toString());
+        model.addString(KEY_CACHE_ID, m_cacheId != null ? m_cacheId.toString() : null);
     }
 
     @Override
     protected void load(final ModelContentRO model) throws InvalidSettingsException {
-        m_credentialType = Optional.ofNullable(model.getString(KEY_TYPE))//
+        m_credentialType = Optional.ofNullable(model.getString(KEY_TYPE, null))//
                 .map(CredentialTypeRegistry::getCredentialType)//
                 .orElse(null);
 
-        // ´the cacheId was moved from port object to port object spec with AP 5.2
-        if (model.containsKey(KEY_CACHE_ID)) {
-            m_cacheId = UUID.fromString(model.getString(KEY_CACHE_ID));
-        } else {
-            m_cacheId = null;
-        }
+        // the cacheId was moved from PortObject to PortObjectSpec with AP 5.2,
+        // but it is also possible for it to be null
+        m_cacheId = Optional.ofNullable(model.getString(KEY_CACHE_ID, null))//
+                .map(UUID::fromString)//
+                .orElse(null);
     }
 
     @Override
