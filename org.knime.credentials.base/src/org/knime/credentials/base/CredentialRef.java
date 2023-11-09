@@ -120,6 +120,23 @@ public class CredentialRef {
     }
 
     /**
+     * Returns the referenced {@link Credential}.
+     *
+     * @param <T>
+     *            The {@link Credential} subclass to return.
+     * @param credentialClass
+     *            The {@link Credential} subclass to return.
+     * @return the referenced {@link Credential}.
+     * @throws NoSuchCredentialException
+     *             if the referenced credential is not present (anymore), or is not
+     *             of the requested type.
+     *
+     */
+    public <T extends Credential> T resolveCredential(final Class<T> credentialClass) throws NoSuchCredentialException {
+        return CredentialPortObjectSpec.resolve(getCredential(Credential.class), credentialClass);
+    }
+
+    /**
      * Returns the referenced {@link Credential} in the shape of the given accessor
      * interface.
      *
@@ -136,15 +153,7 @@ public class CredentialRef {
     public <T extends CredentialAccessor> T toAccessor(final Class<T> accessorClass)
             throws NoSuchCredentialException {
 
-        final var optCredential = getCredential(Credential.class);
-
-        if (optCredential.isEmpty()) {
-            throw new NoSuchCredentialException();
-        }
-
-        return optCredential.filter(c -> accessorClass.isAssignableFrom(c.getClass()))//
-                .map(accessorClass::cast)//
-                .orElseThrow(() -> new NoSuchCredentialException(accessorClass));
+        return CredentialPortObjectSpec.resolve(getCredential(Credential.class), accessorClass);
     }
 
     /**

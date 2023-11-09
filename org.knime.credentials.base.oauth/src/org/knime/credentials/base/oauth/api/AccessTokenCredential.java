@@ -56,8 +56,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.credentials.base.Credential;
@@ -85,11 +88,15 @@ public class AccessTokenCredential
      */
     public static final CredentialType TYPE = CredentialTypeRegistry.getCredentialType("knime.AccessTokenCredential");
 
+    private static final Pattern WHITESPACES_PATTERN = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
+
     private String m_accessToken;
 
     private String m_tokenType;
 
     private Instant m_expiresAfter;
+
+    private Set<String> m_scopes;
 
     private Supplier<AccessTokenCredential> m_tokenRefresher;
 
@@ -100,11 +107,47 @@ public class AccessTokenCredential
      *            The instant when the access token expires. May be null.
      * @param tokenType
      *            The type of access token, e.g. "bearer".
+     *
      * @param tokenRefresher
      *            Function that retrieves a new access token. May be null.
      */
     public AccessTokenCredential(final String accessToken, final Instant expiresAfter, final String tokenType,
             final Supplier<AccessTokenCredential> tokenRefresher) {
+        this(accessToken, expiresAfter, tokenType, Set.of(), tokenRefresher);
+    }
+
+    /**
+     * @param accessToken
+     *            The access token.
+     * @param expiresAfter
+     *            The instant when the access token expires. May be null.
+     * @param tokenType
+     *            The type of access token, e.g. "bearer".
+     * @param scopes
+     *            The scopes granted (as a string).
+     * @param tokenRefresher
+     *            Function that retrieves a new access token. May be null.
+     */
+    public AccessTokenCredential(final String accessToken, final Instant expiresAfter, final String tokenType,
+            final String scopes, final Supplier<AccessTokenCredential> tokenRefresher) {
+        this(accessToken, expiresAfter, tokenType,
+                scopes == null ? Set.of() : Set.of(WHITESPACES_PATTERN.split(scopes)), tokenRefresher);
+    }
+
+    /**
+     * @param accessToken
+     *            The access token.
+     * @param expiresAfter
+     *            The instant when the access token expires. May be null.
+     * @param tokenType
+     *            The type of access token, e.g. "bearer".
+     * @param scopes
+     *            The scopes granted.
+     * @param tokenRefresher
+     *            Function that retrieves a new access token. May be null.
+     */
+    public AccessTokenCredential(final String accessToken, final Instant expiresAfter, final String tokenType,
+            final Set<String> scopes, final Supplier<AccessTokenCredential> tokenRefresher) {
 
         if (StringUtils.isBlank(accessToken)) {
             throw new IllegalArgumentException("Access token must not be blank");
@@ -117,6 +160,7 @@ public class AccessTokenCredential
         m_accessToken = accessToken;
         m_tokenType = tokenType;
         m_expiresAfter = expiresAfter;
+        m_scopes = Objects.requireNonNull(scopes, "List of scopes must no be null");
         m_tokenRefresher = tokenRefresher;
 
         // if the service has provided a refresh token, but we cannot determine when the
@@ -184,6 +228,11 @@ public class AccessTokenCredential
     }
 
     @Override
+    public Set<String> getScopes() {
+        return m_scopes;
+    }
+
+    @Override
     public CredentialPortViewData describe() {
         final var sections = new LinkedList<CredentialPortViewData.Section>();
 
@@ -195,6 +244,7 @@ public class AccessTokenCredential
                         ? m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME)
                         : "n/a" }, //
                 { "Is refreshable", Boolean.toString(m_tokenRefresher != null) }, //
+                { "Scopes", m_scopes.toString() }
         }));
 
         return new CredentialPortViewData(sections);

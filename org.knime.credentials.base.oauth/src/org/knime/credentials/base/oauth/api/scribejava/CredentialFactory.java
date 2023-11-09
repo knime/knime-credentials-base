@@ -109,6 +109,7 @@ public final class CredentialFactory {
             return new AccessTokenCredential(accessToken, //
                     expiresAfter, //
                     tokenType, //
+                    scribeToken.getScope(), //
                     createTokenRefresher(refreshToken, serviceSupplier));
         }
     }

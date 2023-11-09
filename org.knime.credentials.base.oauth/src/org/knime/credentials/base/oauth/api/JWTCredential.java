@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
@@ -135,7 +136,7 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
                 .or(m_accessToken::getExpirationTime)//
                 .orElse(null);
 
-        if (idToken != null) {
+        if (StringUtils.isNotBlank(idToken)) {
             m_idToken = new JWT(idToken);
         }
 
@@ -223,6 +224,22 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
     @Override
     public CredentialType getType() {
         return TYPE;
+    }
+
+    @Override
+    public Set<String> getScopes() {
+        return m_accessToken.getScopes()//
+                .map(Set::copyOf)//
+                .orElse(Set.of());
+    }
+
+    /**
+     * @param claim
+     *            The claim key.
+     * @return The claim.
+     */
+    public Object getClaim(final String claim) {
+        return m_accessToken.getAllClaims().get(claim);
     }
 
     @Override

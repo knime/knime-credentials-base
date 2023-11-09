@@ -51,6 +51,7 @@ package org.knime.credentials.base.oauth.api;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialAccessor;
@@ -82,4 +83,10 @@ public interface AccessTokenAccessor extends CredentialAccessor {
      * @return the token type, e.g. "Bearer"
      */
     String getTokenType();
+
+    /**
+     * @return the scopes granted to the access token; the set might be empty if the
+     *         no scopes were listed in the token endpoint response.
+     */
+    Set<String> getScopes();
 }
