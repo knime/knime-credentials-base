@@ -143,8 +143,43 @@ public class CredentialPortObjectSpec extends AbstractSimplePortObjectSpec {
     }
 
     /**
-     * @return a new {@link CredentialRef} that references the same (cached)
-     *         credential.
+     * Returns the referenced {@link Credential} in the shape of the given accessor
+     * interface.
+     *
+     * @param <T>
+     *            The {@link CredentialAccessor} interface to use.
+     * @param accessorClass
+     *            Class object of the {@link CredentialAccessor} interface to use.
+     * @return the referenced {@link Credential} casted to the given accessor
+     *         interface.
+     * @throws NoSuchCredentialException
+     *             if the referenced credential is not present (anymore), or cannot
+     *             be casted to the given accessor interface.
+     */
+    public <T extends CredentialAccessor> T toAccessor(final Class<T> accessorClass) throws NoSuchCredentialException {
+
+        final var optCredential = getCredential(Credential.class);
+
+        if (optCredential.isEmpty()) {
+            throw new NoSuchCredentialException();
+        }
+
+        return optCredential.filter(c -> accessorClass.isAssignableFrom(c.getClass()))//
+                .map(accessorClass::cast)//
+                .orElseThrow(() -> new NoSuchCredentialException(accessorClass));
+    }
+
+    /**
+     * @return true if the referenced {@link Credential} can be retrieved, false
+     *         otherwise.
+     */
+    public boolean isPresent() {
+        return CredentialCache.get(m_cacheId).isPresent();
+    }
+
+    /**
+     * @return a {@link CredentialRef} that references the same credential as this
+     *         port object spec.
      */
     public CredentialRef toRef() {
         return Optional.ofNullable(m_cacheId)//

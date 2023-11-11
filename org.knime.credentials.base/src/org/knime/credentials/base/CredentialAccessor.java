@@ -44,36 +44,17 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-16 (Alexander Bondaletov, Redfield SE): created
+ *   2023-11-12 (bjoern): created
  */
-package org.knime.credentials.base.oauth.api;
-
-import java.io.IOException;
-
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialAccessor;
+package org.knime.credentials.base;
 
 /**
- * An interface to mark certain {@link Credential}s as useable in the HTTP
- * Authorization header (see <a href=
- * "https://datatracker.ietf.org/doc/html/rfc9110#name-http-authentication"></a>.
- * This interface then also supplies the authenticatin scheme and parameters.
+ * Parent interface for {@link Credential} accessors. An accessor provides a way
+ * of accessing a credential, that is shared among several
+ * {@link CredentialType}s. This allows to write code which can work with
+ * several {@link CredentialType}s.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface HttpAuthorizationHeaderCredentialValue extends CredentialAccessor {
-
-    /**
-     * @return the auth scheme to use, e.g. "Basic" or "Bearer".
-     */
-    String getAuthScheme();
-
-    /**
-     * @return the parameter(s) to use, e.g. an access token.
-     * @throws IOException
-     *             may be thrown in certain cases where it is necessary to perform
-     *             I/O in order to retrieve the current parameters, e.g. when an
-     *             access token needs to be refreshed.
-     */
-    String getAuthParameters() throws IOException;
+public interface CredentialAccessor {
 }

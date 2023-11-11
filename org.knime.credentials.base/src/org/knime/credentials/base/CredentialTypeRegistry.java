@@ -50,6 +50,7 @@ package org.knime.credentials.base;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -134,5 +135,17 @@ public final class CredentialTypeRegistry {
      */
     public static CredentialType getCredentialType(final String id) {
         return getCredentialTypes().get(id);
+    }
+
+    /**
+     *
+     * @param superclassOrIAccessor
+     * @return a list of {@link CredentialType} that have the given
+     *         superclass/accessor interface.
+     */
+    public static List<CredentialType> getCompatibleCredentialTypes(final Class<?> superclassOrIAccessor) {
+        return getCredentialTypes().values().stream()//
+                .filter(type -> superclassOrIAccessor.isAssignableFrom(type.getCredentialClass()))//
+                .toList();
     }
 }

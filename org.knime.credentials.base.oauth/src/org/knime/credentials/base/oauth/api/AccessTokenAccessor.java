@@ -44,36 +44,42 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-16 (Alexander Bondaletov, Redfield SE): created
+ *   2023-11-12 (bjoern): created
  */
 package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.Optional;
 
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialAccessor;
 
 /**
- * An interface to mark certain {@link Credential}s as useable in the HTTP
- * Authorization header (see <a href=
- * "https://datatracker.ietf.org/doc/html/rfc9110#name-http-authentication"></a>.
- * This interface then also supplies the authenticatin scheme and parameters.
+ * Accessor interface for {@link Credential}s that provide an OAuth2 access
+ * token.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface HttpAuthorizationHeaderCredentialValue extends CredentialAccessor {
+public interface AccessTokenAccessor extends CredentialAccessor {
 
     /**
-     * @return the auth scheme to use, e.g. "Basic" or "Bearer".
-     */
-    String getAuthScheme();
-
-    /**
-     * @return the parameter(s) to use, e.g. an access token.
+     * Returns the access token, which is refreshed if necessary (hence the
+     * {@link IOException}).
+     *
+     * @return The access token.
      * @throws IOException
-     *             may be thrown in certain cases where it is necessary to perform
-     *             I/O in order to retrieve the current parameters, e.g. when an
-     *             access token needs to be refreshed.
+     *             May be thrown during token refresh.
      */
-    String getAuthParameters() throws IOException;
+    String getAccessToken() throws IOException;
+
+    /**
+     * @return the optional expiry time of the access token.
+     */
+    Optional<Instant> getExpiresAfter();
+
+    /**
+     * @return the token type, e.g. "Bearer"
+     */
+    String getTokenType();
 }

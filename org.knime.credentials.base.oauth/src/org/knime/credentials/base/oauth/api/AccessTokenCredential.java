@@ -72,7 +72,8 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public final class AccessTokenCredential implements Credential, HttpAuthorizationHeaderCredentialValue {
+public class AccessTokenCredential
+        implements Credential, AccessTokenAccessor, HttpAuthorizationHeaderCredentialValue {
     /**
      * The serializer class
      */
@@ -125,14 +126,7 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
         }
     }
 
-    /**
-     * Returns the access token, which is refreshed if necessary (hence the
-     * {@link IOException}).
-     *
-     * @return The access token.
-     * @throws IOException
-     *             May be thrown during token refresh.
-     */
+    @Override
     public String getAccessToken() throws IOException {
         refreshTokenIfNeeded();
         return m_accessToken;
@@ -164,16 +158,12 @@ public final class AccessTokenCredential implements Credential, HttpAuthorizatio
         }
     }
 
-    /**
-     * @return the optional expiry time of the access token.
-     */
+    @Override
     public Optional<Instant> getExpiresAfter() {
         return Optional.ofNullable(m_expiresAfter);
     }
 
-    /**
-     * @return the tokenType
-     */
+    @Override
     public String getTokenType() {
         return m_tokenType;
     }

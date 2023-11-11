@@ -44,36 +44,44 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-04-16 (Alexander Bondaletov, Redfield SE): created
+ *   2023-11-13 (bjoern): created
  */
-package org.knime.credentials.base.oauth.api;
-
-import java.io.IOException;
-
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialAccessor;
+package org.knime.credentials.base;
 
 /**
- * An interface to mark certain {@link Credential}s as useable in the HTTP
- * Authorization header (see <a href=
- * "https://datatracker.ietf.org/doc/html/rfc9110#name-http-authentication"></a>.
- * This interface then also supplies the authenticatin scheme and parameters.
+ * Indicates that a reference credential does not exist anymore, or is not
+ * compatible with the requested {@link CredentialAccessor} interface.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public interface HttpAuthorizationHeaderCredentialValue extends CredentialAccessor {
+public final class NoSuchCredentialException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * @return the auth scheme to use, e.g. "Basic" or "Bearer".
+     * Constructor when a referenced credential does not exist anymore.
      */
-    String getAuthScheme();
+    public NoSuchCredentialException() {
+        super("Credential not available anymore. Please re-execute the preceding authenticator node.");
+    }
 
     /**
-     * @return the parameter(s) to use, e.g. an access token.
-     * @throws IOException
-     *             may be thrown in certain cases where it is necessary to perform
-     *             I/O in order to retrieve the current parameters, e.g. when an
-     *             access token needs to be refreshed.
+     * Constructor when a referenced credential does not have the requested
+     * superclass or {@link CredentialAccessor} interface.
+     *
+     * @param superclassOrInterface
      */
-    String getAuthParameters() throws IOException;
+    public NoSuchCredentialException(final Class<?> superclassOrInterface) {
+        super(createIncompatibleErrorMsg(superclassOrInterface));
+    }
+
+    private static String createIncompatibleErrorMsg(final Class<?> superclassOrInterface) {
+        final var compatibleTypes = CredentialTypeRegistry.getCompatibleCredentialTypes(superclassOrInterface)//
+                .stream()//
+                .map(CredentialType::getName)//
+                .toArray(String[]::new);
+
+        return "Incompatible credential provided. Potentially compatible credential types are: "
+                + String.join(", ", compatibleTypes);
+    }
 }

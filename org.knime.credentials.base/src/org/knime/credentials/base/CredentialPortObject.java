@@ -80,8 +80,17 @@ public class CredentialPortObject extends AbstractSimplePortObject {
     @SuppressWarnings("hiding")
     public static final PortType TYPE;
 
+    /**
+     * Optional {@link PortType} of the {@link CredentialPortObject}. This should be
+     * used for legacy nodes. Newer nodes should use dynamic ports.
+     */
+    @SuppressWarnings("hiding")
+    public static final PortType TYPE_OPTIONAL;
+
     static {
         TYPE = PortTypeRegistry.getInstance().getPortType(CredentialPortObject.class);
+        TYPE_OPTIONAL = PortTypeRegistry.getInstance().getPortType(CredentialPortObject.class, true);
+
         PortViewManager.registerPortViews(TYPE, //
                 List.of(new PortViewDescriptor("Credential", PortViewFactories.PORT_SPEC_VIEW_FACTORY), //
                         new PortViewDescriptor("Credential", PortViewFactories.PORT_VIEW_FACTORY)), //
@@ -151,6 +160,10 @@ public class CredentialPortObject extends AbstractSimplePortObject {
         return m_spec;
     }
 
+    /**
+     * @return a {@link CredentialRef} that references the same credential as this
+     *         port object.
+     */
     public CredentialRef toRef() {
         return getSpec().toRef();
     }

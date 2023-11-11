@@ -54,19 +54,19 @@ import java.util.UUID;
 
 import org.knime.core.node.config.ConfigRO;
 import org.knime.core.node.config.ConfigWO;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.node.config.base.ConfigBaseRO;
+import org.knime.core.node.config.base.ConfigBaseWO;
 
 /**
+ * A {@link CredentialRef} is similar to a {@link CredentialPortObjectSpec} in
+ * the sense it holds a reference to a {@link Credential}. What's different is
+ * that a {@link CredentialRef} has public methods for loading/saving the
+ * reference and can be more naturally composed into other classes that save
+ * themselves into port settings.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class CredentialRef implements DefaultNodeSettings {
-
-    public static final class CredentialNotFoundException extends Exception {
-        public CredentialNotFoundException() {
-            super("Credential not available anymore. Please re-execute the preceding authenticator node.");
-        }
-    }
+public class CredentialRef {
 
     private static final String KEY_CACHE_ID = "cacheId";
 
@@ -85,44 +85,107 @@ public class CredentialRef implements DefaultNodeSettings {
         m_cacheId = UUID.randomUUID();
     }
 
+    /**
+     * Constructor that creates a reference to the {@link Credential} with the given
+     * cacheID.
+     *
+     * @param cacheId
+     *            The cacheId of the {@link Credential} to reference.
+     */
     public CredentialRef(final UUID cacheId) {
         m_cacheId = Objects.requireNonNull(cacheId, "Cache ID must not be null");
     }
 
+    /**
+     * Constructor that puts the given {@link Credential} into the cache and then
+     * references it
+     *
+     * @param cred
+     *            The credential to cache and then reference.
+     */
     public CredentialRef(final Credential cred) {
         Objects.requireNonNull(cred, "Credential must not be null");
         m_cacheId = CredentialCache.store(cred);
     }
 
+    /**
+     * @param <C>
+     *            The credential class.
+     * @param credentialClass
+     *            The credential class.
+     * @return The credential stored in the credential cache.
+     */
     public <C extends Credential> Optional<C> getCredential(final Class<C> credentialClass) {
         return CredentialCache.get(m_cacheId);
     }
 
-    public <C extends Credential> C resolveCredential(final Class<C> credentialClass)
-            throws CredentialNotFoundException {
-        return getCredential(credentialClass).orElseThrow(CredentialNotFoundException::new);
+    /**
+     * Returns the referenced {@link Credential} in the shape of the given accessor
+     * interface.
+     *
+     * @param <T>
+     *            The {@link CredentialAccessor} interface to use.
+     * @param accessorClass
+     *            Class object of the {@link CredentialAccessor} interface to use.
+     * @return the referenced {@link Credential} casted to the given accessor
+     *         interface.
+     * @throws NoSuchCredentialException
+     *             if the referenced credential is not present (anymore), or cannot
+     *             be casted to the given accessor interface.
+     */
+    public <T extends CredentialAccessor> T toAccessor(final Class<T> accessorClass)
+            throws NoSuchCredentialException {
+
+        final var optCredential = getCredential(Credential.class);
+
+        if (optCredential.isEmpty()) {
+            throw new NoSuchCredentialException();
+        }
+
+        return optCredential.filter(c -> accessorClass.isAssignableFrom(c.getClass()))//
+                .map(accessorClass::cast)//
+                .orElseThrow(() -> new NoSuchCredentialException(accessorClass));
     }
 
     /**
-     * @return
+     * @return true if the referenced {@link Credential} can be retrieved, false
+     *         otherwise.
      */
     public boolean isPresent() {
         return CredentialCache.get(m_cacheId).isPresent();
     }
 
+    /**
+     * Removes the cached {@link Credential} so that it cannot be retrieved anymore.
+     */
     public void dispose() {
         CredentialCache.delete(m_cacheId);
     }
 
+    /**
+     * @return the optional {@link CredentialType} of the referenced
+     *         {@link Credential}. Empty if the {@link Credential} does not exist
+     *         anymore.
+     */
     public Optional<CredentialType> getType() {
         return CredentialCache.get(m_cacheId).map(Credential::getType);
     }
 
-    public void save(final ConfigWO config) {
+    /**
+     * Saves the reference to the given {@link ConfigWO}.
+     *
+     * @param config
+     */
+    public void save(final ConfigBaseWO config) {
         config.addString(KEY_CACHE_ID, m_cacheId.toString());
     }
 
-    public void load(final ConfigRO config) {
+    /**
+     * Initializes the reference from the given {@link ConfigRO}.
+     *
+     * @param config
+     */
+    public void load(final ConfigBaseRO config) {
         m_cacheId = UUID.fromString(config.getString(KEY_CACHE_ID, null));
     }
 }

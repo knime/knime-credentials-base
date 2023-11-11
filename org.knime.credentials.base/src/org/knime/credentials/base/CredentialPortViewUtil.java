@@ -68,6 +68,6 @@ public final class CredentialPortViewUtil {
      * @return an obfuscated/masked string of same length.
      */
     public static String obfuscate(final String toObfuscate) {
-        return "*".repeat(toObfuscate.length());
+        return "*".repeat(Math.min(toObfuscate.length(), 50));
     }
 }

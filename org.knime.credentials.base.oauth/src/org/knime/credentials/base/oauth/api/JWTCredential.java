@@ -73,7 +73,7 @@ import org.knime.credentials.base.NoOpCredentialSerializer;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class JWTCredential implements Credential, HttpAuthorizationHeaderCredentialValue {
+public class JWTCredential implements Credential, AccessTokenAccessor, HttpAuthorizationHeaderCredentialValue {
     /**
      * The serializer class
      */
@@ -149,27 +149,24 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
     }
 
     /**
-     * Returns the access token. Access token is refreshed if necessary.
+     * Returns the access token as a JWT, refreshing it if necessary (hence the
+     * {@link IOException}).
      *
      * @return The access token.
      * @throws IOException
      *             May be thrown during token refresh.
      */
-    public JWT getAccessToken() throws IOException {
+    public JWT getJWTAccessToken() throws IOException {
         refreshTokenIfNeeded();
         return m_accessToken;
     }
 
-    /**
-     * @return the optional expiry time of the access token.
-     */
+    @Override
     public Optional<Instant> getExpiresAfter() {
         return Optional.ofNullable(m_expiresAfter);
     }
 
-    /**
-     * @return the type of access token, e.g. "bearer".
-     */
+    @Override
     public String getTokenType() {
         return m_tokenType;
     }
@@ -215,7 +212,12 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
 
     @Override
     public String getAuthParameters() throws IOException {
-        return getAccessToken().asString();
+        return m_accessToken.asString();
+    }
+
+    @Override
+    public String getAccessToken() throws IOException {
+        return m_accessToken.asString();
     }
 
     @Override
@@ -228,9 +230,9 @@ public class JWTCredential implements Credential, HttpAuthorizationHeaderCredent
         final var sections = new LinkedList<CredentialPortViewData.Section>();
 
         try {
-            sections.add(
-                    new Section(String.format("Access token (type: %s, refreshable: %s)", m_tokenType,
-                            m_tokenRefresher != null), describe(getAccessToken())));
+            sections.add(new Section(
+                    String.format("Access token (type: %s, refreshable: %s)", m_tokenType, m_tokenRefresher != null),
+                    describe(getJWTAccessToken())));
 
             if (getIdToken().isPresent()) {
                 sections.add(new Section("ID token", describe(getIdToken().orElseThrow())));
