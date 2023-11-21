@@ -18,6 +18,20 @@ properties([
 
 try {
     knimetools.defaultTychoBuild('org.knime.update.credentials.base')
+    
+    workflowTests.runTests(
+        dependencies: [
+            repositories: [
+		'knime-gateway',
+		'knime-xml',
+		'knime-json',
+                'knime-kerberos',
+		'knime-rest',
+		'knime-js-base',
+		'knime-js-core'
+	    ]
+        ]
+    )
 
     stage('Sonarqube analysis') {
         env.lastStage = env.STAGE_NAME
