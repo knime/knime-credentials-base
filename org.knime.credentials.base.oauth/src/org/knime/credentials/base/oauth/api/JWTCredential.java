@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -246,13 +248,19 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
     public CredentialPortViewData describe() {
         final var sections = new LinkedList<CredentialPortViewData.Section>();
 
-        try {
-            sections.add(new Section(
-                    String.format("Access token (type: %s, refreshable: %s)", m_tokenType, m_tokenRefresher != null),
-                    describe(getJWTAccessToken())));
+        sections.add(new CredentialPortViewData.Section("Access token", new String[][] { //
+                { "Property", "Value" }, //
+                { "Token type", m_tokenType }, //
+                { "Expires after", m_expiresAfter != null//
+                        ? m_expiresAfter.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME)
+                        : "n/a" }, //
+                { "Is refreshable", Boolean.toString(m_tokenRefresher != null) }, //
+        }));
 
+        try {
+            sections.add(new Section("Access token claims", describe(getJWTAccessToken())));
             if (getIdToken().isPresent()) {
-                sections.add(new Section("ID token", describe(getIdToken().orElseThrow())));
+                sections.add(new Section("ID token claims", describe(getIdToken().orElseThrow())));
             }
         } catch (IOException ex) {// NOSONAR error message is attached to description
             sections.add(new Section("Error", new String[][] { { "message", ex.getMessage() } }));
