@@ -56,7 +56,9 @@ import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.LayoutGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.PersistableSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
 
 /**
@@ -68,7 +70,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public interface CredentialsSettings extends DefaultNodeSettings, LayoutGroup {
+public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
 
     /**
      * A {@link ChoicesProvider} yielding choices for credential flow variables.

@@ -52,7 +52,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.LayoutGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.PersistableSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
@@ -68,7 +69,7 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 @SuppressWarnings("restriction")
 @Effect(signals = IsPublicApp.class, type = EffectType.SHOW, ignoreOnMissingSignals = true)
 @Layout(AppSection.Public.class)
-public class PublicAppSettings implements DefaultNodeSettings, LayoutGroup {
+public class PublicAppSettings implements WidgetGroup, PersistableSettings {
 
     /**
      * Field for the app ID.

@@ -54,28 +54,29 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.LayoutGroup;
+import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.PersistableSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 
 /**
- * Implementation of {@link DefaultNodeSettings} to specify a list of scopes.
+ * Implementation of {@link WidgetGroup} to specify a list of scopes.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public class ScopeSettings implements LayoutGroup, DefaultNodeSettings {
+public class ScopeSettings implements WidgetGroup, PersistableSettings {
 
     /**
      * Although a scope is just a string, we have to create a custom class,
      * otherwise the @ArrayWidget does not display correctly.
      */
-    static final class Scope {
+    static final class Scope implements WidgetGroup {
+        @Widget
         String m_scope;
 
         Scope(final String scope) {
