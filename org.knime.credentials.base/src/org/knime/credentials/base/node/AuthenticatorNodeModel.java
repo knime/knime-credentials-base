@@ -195,7 +195,7 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
 
     @Override
     protected final void onDispose() {
-        onReset();
+        reset();
         onDisposeInternal();
     }
 
@@ -208,7 +208,7 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
     }
 
     @Override
-    protected void onReset() {
+    protected void reset() {
         if (m_credentialCacheKey != null) {
             CredentialCache.delete(m_credentialCacheKey);
             m_credentialCacheKey = null;
@@ -216,9 +216,9 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
     }
 
     @Override
-    protected void onLoadInternals(final File nodeInternDir, final ExecutionMonitor exec)
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
-
         setWarningMessage("Credential not available anymore. Please re-execute this node.");
     }
+
 }
