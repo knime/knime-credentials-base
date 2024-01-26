@@ -52,11 +52,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
+import org.knime.credentials.base.secretstore.SecretConsumableParser;
+import org.knime.credentials.base.secretstore.SecretConsumableParserProvider;
 
 /**
  * The class managing registered {@link CredentialType}'s.
@@ -71,7 +75,12 @@ public final class CredentialTypeRegistry {
 
     private static final CredentialTypeRegistry INSTANCE = new CredentialTypeRegistry();
 
-    private Map<String, CredentialType> m_credentialTypes = new HashMap<>();
+    private final Map<String, CredentialType> m_credentialTypes = new HashMap<>();
+
+    /**
+     * @since 5.2.1
+     */
+    private final Map<String, SecretConsumableParser<?>> m_secretParsers = new HashMap<>();
 
     private boolean m_initialized;
 
@@ -95,12 +104,12 @@ public final class CredentialTypeRegistry {
     @SuppressWarnings("unchecked")
     private <T extends Credential> void addCredentialType(final IConfigurationElement e) {
 
-        final var declaringExt = e.getDeclaringExtension().getUniqueIdentifier();
+        final var declaringExt = e.getDeclaringExtension().getNamespaceIdentifier();
         final var id = e.getAttribute("id");
 
         if (m_credentialTypes.containsKey(id)) {
             LOGGER.error(String.format(
-                    "Ignoring extension %s because it tries to register an duplicate credential type with ID %s",
+                    "Ignoring extension '%s' because it tries to register an duplicate credential type with ID %s",
                     declaringExt, //
                     id));
             return;
@@ -109,14 +118,45 @@ public final class CredentialTypeRegistry {
         try {
             final var name = e.getAttribute("name");
             final var serializer = (CredentialSerializer<T>) e.createExecutableExtension("credentialSerializerClass");
+            final var consumableParsers = createSecretConsumableParsers(e);
 
-            m_credentialTypes.put(id, //
-                    new CredentialType(id, name, serializer.getCredentialClass(), serializer));
+            m_credentialTypes.put(id, new CredentialType(id, name, serializer.getCredentialClass(), serializer));
+
+            mergeSecretConsumableParsers(declaringExt, consumableParsers);
 
         } catch (Throwable ex) { // NOSONAR
             LOGGER.error(String.format("Problems during initialization of credential type with id '%s'.", id), ex);
             LOGGER.error(String.format("Extension %s ignored.", declaringExt));
         }
+    }
+
+    private void mergeSecretConsumableParsers(final String declaringExt,
+            final Map<String, SecretConsumableParser<?>> consumableParsers) {
+        for (final var entry : consumableParsers.entrySet()) {
+            final var secretType = entry.getKey();
+            final var parser = entry.getValue();
+
+            if (m_secretParsers.containsKey(secretType)) {
+                LOGGER.warnWithFormat(
+                        "Ignoring duplicate SecretConsumableParser for secret type '%s' provided by extension '%s'.", // NOSONAR
+                        secretType, declaringExt);
+            }
+            m_secretParsers.put(secretType, parser);
+        }
+    }
+
+    private static Map<String, SecretConsumableParser<?>> createSecretConsumableParsers(final IConfigurationElement e)
+            throws CoreException {
+
+        final var consumableParsers = new HashMap<String, SecretConsumableParser<?>>();
+
+        if (e.getAttribute("secretConsumableParserProvider") != null) {
+            final var parserProvider = (SecretConsumableParserProvider<?>) e
+                    .createExecutableExtension("secretConsumableParserProvider");
+            consumableParsers.putAll(parserProvider.parsers());
+        }
+
+        return consumableParsers;
     }
 
     /**
@@ -147,5 +187,28 @@ public final class CredentialTypeRegistry {
         return getCredentialTypes().values().stream()//
                 .filter(type -> superclassOrIAccessor.isAssignableFrom(type.getCredentialClass()))//
                 .toList();
+    }
+
+    /**
+     * Provides a parser instance for the given (Secret Store) secret type.
+     *
+     * <p>
+     * Secret Store is a service in KNIME Business Hub 1.8+, that provides
+     * credential management for KNIME workflows. The Secret Retriever node fetches
+     * secret (consumables) from Secret Store, and turns each consumable into a
+     * {@link Credential}. Every registered {@link CredentialType} can provide one
+     * or more parsers, to parse the (JSON) consumable returned by Secret Store into
+     * a Credential. The Secret Retriever node picks the parser that declares the
+     * secret type mentioned in the consumable.
+     * </p>
+     *
+     * @param secretType
+     *            The secret type.
+     * @return an optional {@link SecretConsumableParser}, if registered for the
+     *         secret type.
+     * @since 5.2.1
+     */
+    public static Optional<SecretConsumableParser<?>> getSecretConsumableParser(final String secretType) { // NOSONAR
+        return Optional.ofNullable(INSTANCE.m_secretParsers.get(secretType));
     }
 }
