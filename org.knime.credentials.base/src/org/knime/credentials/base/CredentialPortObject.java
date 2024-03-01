@@ -152,7 +152,8 @@ public class CredentialPortObject extends AbstractSimplePortObject {
 
     @Override
     public String getSummary() {
-        return String.format("Credential (%s)", getCredentialType().getName());
+        return String.format("Credential (%s)",
+                m_spec.getCredentialType().map(CredentialType::getName).orElse("Unknown"));
     }
 
     @Override
