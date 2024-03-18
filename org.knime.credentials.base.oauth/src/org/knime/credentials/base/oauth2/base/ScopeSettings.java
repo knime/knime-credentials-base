@@ -76,7 +76,7 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
      * otherwise the @ArrayWidget does not display correctly.
      */
     static final class Scope implements WidgetGroup {
-        @Widget
+        @Widget(title = "", description = "")
         String m_scope;
 
         Scope(final String scope) {
