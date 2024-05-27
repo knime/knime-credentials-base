@@ -58,6 +58,7 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeModel;
@@ -97,6 +98,21 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
      */
     protected AuthenticatorNodeModel(final WebUINodeConfiguration configuration, final Class<T> settingsClass) {
         super(configuration, settingsClass);
+    }
+
+    /**
+     * Constructor that passes on the input and output ports.
+     *
+     * @param inputPorts
+     *            The input port types to use.
+     * @param outputPorts
+     *            The output port types to use.
+     * @param settingsClass
+     *            The concrete settings class to use.
+     */
+    protected AuthenticatorNodeModel(final PortType[] inputPorts, final PortType[] outputPorts,
+            final Class<T> settingsClass) {
+        super(inputPorts, outputPorts, settingsClass);
     }
 
     /**
