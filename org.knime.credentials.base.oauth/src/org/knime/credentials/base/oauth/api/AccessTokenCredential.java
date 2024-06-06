@@ -162,43 +162,48 @@ public class AccessTokenCredential
         m_expiresAfter = expiresAfter;
         m_scopes = Objects.requireNonNull(scopes, "List of scopes must no be null");
         m_tokenRefresher = tokenRefresher;
-
-        // if the service has provided a refresh token, but we cannot determine when the
-        // access token expires, then we will refresh the access token every 60 seconds.
-        if (m_tokenRefresher != null && m_expiresAfter == null) {
-            m_expiresAfter = Instant.now().plusSeconds(60);
-        }
     }
 
     @Override
     public String getAccessToken() throws IOException {
-        refreshTokenIfNeeded();
+        return getAccessToken(false);
+    }
+
+    @Override
+    public String getAccessToken(final boolean forceRefresh) throws IOException {
+
+        if (forceRefresh && m_tokenRefresher == null) {
+            throw new IOException("Access token cannot be refreshed");
+        }
+
+        final var isExpired = m_expiresAfter != null && m_expiresAfter.isBefore(Instant.now());
+        if ((m_tokenRefresher != null) && (forceRefresh || isExpired)) {
+            refreshAccessToken();
+        }
+
         return m_accessToken;
     }
 
-    private void refreshTokenIfNeeded() throws IOException {
-        if (m_tokenRefresher != null && m_expiresAfter.isBefore(Instant.now())) {
+    private void refreshAccessToken() throws IOException {
+        try {
+            final var refreshedCredential = m_tokenRefresher.get();
 
-            try {
-                final var refreshedCredential = m_tokenRefresher.get();
-
-                if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
-                    throw new IOException(
-                            String.format("Token type has changed during refresh. Was %s, but has become %s", //
-                                    m_tokenType, //
-                                    refreshedCredential.m_accessToken));
-                }
-
-                m_accessToken = refreshedCredential.m_accessToken;
-                m_expiresAfter = refreshedCredential.m_expiresAfter;
-
-                if (refreshedCredential.m_tokenRefresher != null) {
-                    m_tokenRefresher = refreshedCredential.m_tokenRefresher;
-                }
-
-            } catch (UncheckedIOException e) { // NOSONAR just a wrapper
-                throw e.getCause();
+            if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
+                throw new IOException(//
+                        String.format("Token type has changed during refresh. Was %s, but has become %s", //
+                                m_tokenType, //
+                                refreshedCredential.m_accessToken));
             }
+
+            m_accessToken = refreshedCredential.m_accessToken;
+            m_expiresAfter = refreshedCredential.m_expiresAfter;
+
+            if (refreshedCredential.m_tokenRefresher != null) {
+                m_tokenRefresher = refreshedCredential.m_tokenRefresher;
+            }
+
+        } catch (UncheckedIOException e) { // NOSONAR just a wrapper
+            throw e.getCause();
         }
     }
 

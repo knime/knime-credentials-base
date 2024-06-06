@@ -65,14 +65,33 @@ import org.knime.credentials.base.CredentialAccessor;
 public interface AccessTokenAccessor extends CredentialAccessor {
 
     /**
-     * Returns the access token, which is refreshed if necessary (hence the
-     * {@link IOException}).
+     * Returns the access token, which is refreshed if it has expired (see
+     * {@link #getExpiresAfter()}) and if it is refreshable.
      *
-     * @return The access token.
+     * @return the access token.
      * @throws IOException
      *             May be thrown during token refresh.
      */
     String getAccessToken() throws IOException;
+
+    /**
+     * Returns the access token, which is refreshed if (1) it has expired (see
+     * {@link #getExpiresAfter()}), or if (2) forceRefresh is set to true.
+     *
+     * Note that a failed attempt to refresh the access token results in an
+     * {@link IOException}, i.e. if the refresh is not possible or the refresh has
+     * failed. Hence forceRefresh=true should only be used as a fallback, if the
+     * returned access token is being rejected by the target service.
+     *
+     * @param forceRefresh
+     *            If true, tries to refresh the access token before returning it,
+     *            failing with an {@link IOException} if this is not possible.
+     * @return the access token.
+     * @throws IOException
+     *             May be thrown during token refresh.
+     * @since 5.3
+     */
+    String getAccessToken(boolean forceRefresh) throws IOException;
 
     /**
      * @return the optional expiry time of the access token.

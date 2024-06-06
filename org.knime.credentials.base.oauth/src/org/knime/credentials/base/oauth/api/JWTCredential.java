@@ -143,12 +143,6 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
         }
 
         m_tokenRefresher = tokenRefresher;
-
-        // if the service has provided a refresh token, but we cannot determine when the
-        // access token expires, then we will refresh the access token every 60 seconds.
-        if (m_tokenRefresher != null && m_expiresAfter == null) {
-            m_expiresAfter = Instant.now().plusSeconds(60);
-        }
     }
 
     /**
@@ -160,7 +154,37 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
      *             May be thrown during token refresh.
      */
     public JWT getJWTAccessToken() throws IOException {
-        refreshTokenIfNeeded();
+        return getJWTAccessToken(false);
+    }
+
+    /**
+     * Returns the JWT access token, which is refreshed if (1) it has expired (see
+     * {@link #getExpiresAfter()}), or (2) if forceRefresh is set to true.
+     *
+     * Note that a failed attempt to refresh the access token results in an
+     * {@link IOException}, i.e. if the refresh is not possible or the refresh has
+     * failed. Hence forceRefresh=true should only be used as a fallback, if the
+     * returned access token is being rejected by the target service.
+     *
+     * @param forceRefresh
+     *            If true, tries to refresh the access token before returning it,
+     *            failing with an {@link IOException} if this is not possible.
+     * @return the access token.
+     * @throws IOException
+     *             May be thrown during token refresh.
+     * @since 5.3
+     */
+
+    public JWT getJWTAccessToken(final boolean forceRefresh) throws IOException {
+        if (forceRefresh && m_tokenRefresher == null) {
+            throw new IOException("Access token cannot be refreshed");
+        }
+
+        final var isExpired = m_expiresAfter != null && m_expiresAfter.isBefore(Instant.now());
+        if ((m_tokenRefresher != null) && (forceRefresh || isExpired)) {
+            refreshAccessToken();
+        }
+
         return m_accessToken;
     }
 
@@ -182,29 +206,26 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
         return Optional.ofNullable(m_idToken);
     }
 
-    private void refreshTokenIfNeeded() throws IOException {
-        if (m_tokenRefresher != null && m_expiresAfter.isBefore(Instant.now())) {
+    private void refreshAccessToken() throws IOException {
+        try {
+            final var refreshedCredential = m_tokenRefresher.get();
 
-            try {
-                final var refreshedCredential = m_tokenRefresher.get();
-
-                if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
-                    throw new IOException(
-                            String.format("Token type has changed during refresh. Was %s, but has become %s", //
-                                    m_tokenType, //
-                                    refreshedCredential.m_accessToken));
-                }
-
-                m_accessToken = refreshedCredential.m_accessToken;
-                m_expiresAfter = refreshedCredential.m_expiresAfter;
-                m_idToken = refreshedCredential.m_idToken;
-
-                if (refreshedCredential.m_tokenRefresher != null) {
-                    m_tokenRefresher = refreshedCredential.m_tokenRefresher;
-                }
-            } catch (UncheckedIOException e) { // NOSONAR this is just a wrapper
-                throw e.getCause();
+            if (!m_tokenType.equalsIgnoreCase(refreshedCredential.m_tokenType)) {
+                throw new IOException(String.format(//
+                        "Token type has changed during refresh. Was %s, but has become %s", //
+                        m_tokenType, //
+                        refreshedCredential.m_accessToken));
             }
+
+            m_accessToken = refreshedCredential.m_accessToken;
+            m_expiresAfter = refreshedCredential.m_expiresAfter;
+            m_idToken = refreshedCredential.m_idToken;
+
+            if (refreshedCredential.m_tokenRefresher != null) {
+                m_tokenRefresher = refreshedCredential.m_tokenRefresher;
+            }
+        } catch (UncheckedIOException e) { // NOSONAR this is just a wrapper
+            throw e.getCause();
         }
     }
 
@@ -220,7 +241,12 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
 
     @Override
     public String getAccessToken() throws IOException {
-        return m_accessToken.asString();
+        return getJWTAccessToken().asString();
+    }
+
+    @Override
+    public String getAccessToken(final boolean forceRefresh) throws IOException {
+        return getJWTAccessToken(forceRefresh).asString();
     }
 
     @Override
