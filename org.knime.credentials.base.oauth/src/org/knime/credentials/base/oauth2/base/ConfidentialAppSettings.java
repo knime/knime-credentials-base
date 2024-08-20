@@ -51,10 +51,10 @@ package org.knime.credentials.base.oauth2.base;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.node.CredentialsSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
 import org.knime.credentials.base.oauth2.base.Sections.AppSection;
@@ -66,7 +66,7 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-@Effect(signals = IsPublicApp.class, type = EffectType.HIDE, ignoreOnMissingSignals = true)
+@Effect(predicate = IsPublicApp.class, type = EffectType.HIDE)
 @Layout(AppSection.Confidential.class)
 public class ConfidentialAppSettings implements CredentialsSettings {
 

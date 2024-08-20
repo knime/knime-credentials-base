@@ -56,14 +56,14 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.GenericTokenHolder;
 import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
@@ -96,12 +96,12 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
             to manually specify endpoint URLs.""")
     @Layout(ServiceSection.TypeChooser.class)
     @ValueSwitchWidget
-    @Signal(condition = IsStandardService.class)
+    @ValueReference(ServiceTypeRef.class)
     ServiceType m_serviceType = ServiceType.STANDARD;
 
     @Widget(title = "Service", description = "A standard OAuth service from a predefined list.")
     @Layout(ServiceSection.Standard.class)
-    @Effect(signals = IsStandardService.class, type = EffectType.SHOW)
+    @Effect(predicate = IsStandardService.class, type = EffectType.SHOW)
     StandardService m_standardService;
 
     CustomServiceSettings m_customService = new CustomServiceSettings();
@@ -109,7 +109,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
     @Layout(AppSection.TypeChooser.class)
     @ValueSwitchWidget
-    @Signal(condition = IsPublicApp.class)
+    @ValueReference(AppTypeRef.class)
     AppType m_appType = AppType.PUBLIC;
 
     PublicAppSettings m_publicApp = new PublicAppSettings();
@@ -167,9 +167,9 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         @Override
         protected String getButtonText(final States state) {
             return switch (state) {
-            case READY -> "Login";
-            case CANCEL -> "Cancel login";
-            case DONE -> "Login again";
+                case READY -> "Login";
+                case CANCEL -> "Cancel login";
+                case DONE -> "Login again";
             };
         }
 

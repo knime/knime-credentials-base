@@ -53,11 +53,11 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsStandardService;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
@@ -74,7 +74,7 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-@Effect(signals = IsStandardService.class, type = EffectType.HIDE, ignoreOnMissingSignals = true)
+@Effect(predicate = IsStandardService.class, type = EffectType.HIDE)
 public class TokenEndpointSettings implements DefaultNodeSettings, WidgetGroup {
 
     /**

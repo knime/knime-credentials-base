@@ -54,9 +54,9 @@ import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
 import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 
@@ -67,7 +67,7 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-@Effect(signals = IsPublicApp.class, type = EffectType.SHOW, ignoreOnMissingSignals = true)
+@Effect(predicate = IsPublicApp.class, type = EffectType.SHOW)
 @Layout(AppSection.Public.class)
 public class PublicAppSettings implements WidgetGroup, PersistableSettings {
 

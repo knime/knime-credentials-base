@@ -53,9 +53,9 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.node.UsernamePasswordSettings;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
@@ -87,7 +87,7 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
     @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
     @ValueSwitchWidget
     @Layout(AppSection.TypeChooser.class)
-    @Signal(condition = IsPublicApp.class)
+    @ValueReference(AppTypeRef.class)
     AppType m_appType = AppType.PUBLIC;
 
     PublicAppSettings m_publicApp = new PublicAppSettings();

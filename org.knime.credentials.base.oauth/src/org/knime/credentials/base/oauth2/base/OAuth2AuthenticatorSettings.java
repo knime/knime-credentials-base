@@ -50,7 +50,9 @@ package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
 
 import com.github.scribejava.core.oauth.OAuth20Service;
 
@@ -76,17 +78,33 @@ public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
         STANDARD, CUSTOM;
     }
 
-    class IsStandardService extends OneOfEnumCondition<ServiceType> {
+    class AppTypeRef implements Reference<AppType> {
+
+    }
+
+    class ServiceTypeRef implements Reference<ServiceType> {
+
+    }
+
+    class IsStandardService implements PredicateProvider {
+
         @Override
-        public ServiceType[] oneOf() {
-            return new ServiceType[] { ServiceType.STANDARD };
+        public Predicate init(final PredicateInitializer i) {
+            if (i.isMissing(ServiceTypeRef.class)) {
+                return i.never();
+            }
+            return i.getEnum(ServiceTypeRef.class).isOneOf(ServiceType.STANDARD);
         }
     }
 
-    class IsPublicApp extends OneOfEnumCondition<AppType> {
+    class IsPublicApp implements PredicateProvider {
+
         @Override
-        public AppType[] oneOf() {
-            return new AppType[] { AppType.PUBLIC };
+        public Predicate init(final PredicateInitializer i) {
+            if (i.isMissing(AppTypeRef.class)) {
+                return i.never();
+            }
+            return i.getEnum(AppTypeRef.class).isOneOf(AppType.PUBLIC);
         }
     }
 
