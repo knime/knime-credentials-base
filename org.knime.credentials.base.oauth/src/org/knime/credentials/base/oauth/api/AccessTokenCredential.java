@@ -110,6 +110,8 @@ public class AccessTokenCredential
      *
      * @param tokenRefresher
      *            Function that retrieves a new access token. May be null.
+     *            tokenRefresher.get() may throw an {@link UncheckedIOException} if
+     *            something goes wrong during refresh.
      */
     public AccessTokenCredential(final String accessToken, final Instant expiresAfter, final String tokenType,
             final Supplier<AccessTokenCredential> tokenRefresher) {
