@@ -86,9 +86,6 @@ public interface SecretConsumableParser<T extends Credential> {
      * called a "consumable". Only this consumable is then passed to this method
      * here.
      *
-     * @param secretProvider
-     *            allows to fetch a new secret from the Secret Store
-     *
      * @param consumable
      *            A {@link JsonObject} with the "consumable" ( the "secret" field of
      *            the consume endpoint response).
@@ -97,5 +94,5 @@ public interface SecretConsumableParser<T extends Credential> {
      *             when the consumable could not be parsed successfully, e.g. fields
      *             were missing.
      */
-    T parse(SecretProvider secretProvider, JsonObject consumable) throws UnparseableSecretConsumableException;
+    T parse(JsonObject consumable) throws UnparseableSecretConsumableException;
 }
