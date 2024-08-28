@@ -44,58 +44,32 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2024-01-24 (bjoern): created
+ *   2024-08-27 (Tobias): created
  */
 package org.knime.credentials.base.secretstore;
 
-import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialTypeRegistry;
+import org.knime.core.node.InvalidSettingsException;
 
 import jakarta.json.JsonObject;
 
 /**
- * <p>
- * This interface is part of the KNIME Hub Secret Store integration, which most
- * importantly provides the Secret Retriever node. See
- * {@link CredentialTypeRegistry#getSecretConsumableParser(String)} for
- * informational context.
- * </p>
+ * Interface that allows to fetch a new secret from the Secret Store.
  *
- * <p>
- * Functional interface to implement a parser from a Secret Store consumable to
- * a {@link Credential}. Implementations should use {@link ParserUtil} to
- * generate good error messages.
- * </p>
- *
- * @author Bjoern Lohrmann, KNIME GmbH
- * @param <T>
- *            The type of {@link Credential} created by this parser.
- * @since 5.2.1
+ * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-@FunctionalInterface
-public interface SecretConsumableParser<T extends Credential> {
+public interface SecretProvider {
+
 
     /**
-     * Parses a Secret Store consumable into a {@link Credential}. Implementations
-     * should use {@link ParserUtil} to generate good error messages.
+     * Retrieve a consumable Secret from the Secret Store. The returned
+     * {@link JsonObject} only contains the secret part of the Json response from
+     * the Secret Store.
      *
-     * <p>
-     * The Secret Retriever calls the Secret Store
-     * /secret-store/secrets/:secretId/consume endpoint, which returns a JSON
-     * response. Inside that response is a field called "secret" whose value is
-     * called a "consumable". Only this consumable is then passed to this method
-     * here.
+     * @return a {@link JsonObject} with the "consumable" ( the "secret" field of
+     *         the consume endpoint response)
      *
-     * @param secretProvider
-     *            allows to fetch a new secret from the Secret Store
-     *
-     * @param consumable
-     *            A {@link JsonObject} with the "consumable" ( the "secret" field of
-     *            the consume endpoint response).
-     * @return a {@link Credential} that has been parsed from the consumable.
-     * @throws UnparseableSecretConsumableException
-     *             when the consumable could not be parsed successfully, e.g. fields
-     *             were missing.
+     * @throws InvalidSettingsException
+     *             if the secret fetching failed or returned an error
      */
-    T parse(SecretProvider secretProvider, JsonObject consumable) throws UnparseableSecretConsumableException;
+    JsonObject getConsumableSecret() throws InvalidSettingsException;
 }
