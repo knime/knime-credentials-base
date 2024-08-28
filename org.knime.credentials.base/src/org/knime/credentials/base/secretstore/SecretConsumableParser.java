@@ -48,6 +48,10 @@
  */
 package org.knime.credentials.base.secretstore;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.function.Supplier;
+
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialTypeRegistry;
 
@@ -64,7 +68,7 @@ import jakarta.json.JsonObject;
  * <p>
  * Functional interface to implement a parser from a Secret Store consumable to
  * a {@link Credential}. Implementations should use {@link ParserUtil} to
- * generate good error messages.
+ * generate consistent error messages.
  * </p>
  *
  * @author Bjoern Lohrmann, KNIME GmbH
@@ -77,22 +81,29 @@ public interface SecretConsumableParser<T extends Credential> {
 
     /**
      * Parses a Secret Store consumable into a {@link Credential}. Implementations
-     * should use {@link ParserUtil} to generate good error messages.
+     * should use {@link ParserUtil} to generate consistent error messages.
      *
      * <p>
-     * The Secret Retriever calls the Secret Store
+     * Context: The Secret Retriever node calls the Secret Store
      * /secret-store/secrets/:secretId/consume endpoint, which returns a JSON
      * response. Inside that response is a field called "secret" whose value is
      * called a "consumable". Only this consumable is then passed to this method
      * here.
      *
-     * @param consumable
-     *            A {@link JsonObject} with the "consumable" ( the "secret" field of
-     *            the consume endpoint response).
+     * @param consumableSupplier
+     *            Fetches a consumable -- i.e. the "secret" field of the consume
+     *            endpoint response -- from Secret Store. Can be called multiple
+     *            times, and each time a new consumable will be fetched. Throws an
+     *            {@link UncheckedIOException} in case the consumable could not be
+     *            fetched.
+     *
      * @return a {@link Credential} that has been parsed from the consumable.
      * @throws UnparseableSecretConsumableException
      *             when the consumable could not be parsed successfully, e.g. fields
      *             were missing.
+     * @throws IOException
+     *             When invoking consumableSupplier.get() resulted in an
+     *             {@link UncheckedIOException}.
      */
-    T parse(JsonObject consumable) throws UnparseableSecretConsumableException;
+    T parse(Supplier<JsonObject> consumableSupplier) throws UnparseableSecretConsumableException, IOException;
 }
