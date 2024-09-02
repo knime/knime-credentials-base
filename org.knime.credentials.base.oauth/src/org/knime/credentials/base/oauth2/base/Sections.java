@@ -63,7 +63,7 @@ public class Sections {
     /**
      * The section for OAuth2 service configuration.
      */
-    @Section(title = "OAuth2 Service")
+    @Section(title = "Endpoints configuration")
     public interface ServiceSection {
 
         /**
@@ -101,7 +101,7 @@ public class Sections {
     /**
      * The section for OAuth2 application configuration.
      */
-    @Section(title = "Client/Application")
+    @Section(title = "Client/Application configuration")
     @After(ServiceSection.class)
     public interface AppSection {
         /**
@@ -136,7 +136,7 @@ public class Sections {
     /**
      * The section for OAuth2 scopes.
      */
-    @Section(title = "Scopes")
+    @Section(title = "Scopes of access")
     @After(AppSection.class)
     public interface ScopesSection {
     }

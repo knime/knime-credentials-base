@@ -106,7 +106,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
     CustomServiceSettings m_customService = new CustomServiceSettings();
 
-    @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
+    @Widget(title = "Type", description = CLIENT_TYPE_DESCRIPTION)
     @Layout(AppSection.TypeChooser.class)
     @ValueSwitchWidget
     @ValueReference(AppTypeRef.class)

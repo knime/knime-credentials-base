@@ -84,7 +84,7 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
 
     TokenEndpointSettings m_service = new TokenEndpointSettings();
 
-    @Widget(title = "Client/App type", description = CLIENT_TYPE_DESCRIPTION)
+    @Widget(title = "Type", description = CLIENT_TYPE_DESCRIPTION)
     @ValueSwitchWidget
     @Layout(AppSection.TypeChooser.class)
     @ValueReference(AppTypeRef.class)

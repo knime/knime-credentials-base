@@ -79,7 +79,7 @@ class CustomServiceSettings extends TokenEndpointSettings {
         super.validate();
 
         if (StringUtils.isEmpty(m_authorizationUrl)) {
-            throw new InvalidSettingsException("Authorization endpoing URL is required");
+            throw new InvalidSettingsException("Authorization endpoint URL is required");
         }
     }
 
