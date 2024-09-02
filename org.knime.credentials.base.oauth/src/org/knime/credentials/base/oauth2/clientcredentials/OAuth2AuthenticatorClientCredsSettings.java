@@ -96,11 +96,11 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
         interface NameAndValue {
         }
 
-        @Widget(title = "Field name", description = "Name of the additional request body field.")
+        @Widget(title = "Name", description = "Name of the additional request body field.")
         @Layout(NameAndValue.class)
         String m_name;
 
-        @Widget(title = "Field value", description = "Value of the additional request body field.")
+        @Widget(title = "Value", description = "Value of the additional request body field.")
         @Layout(NameAndValue.class)
         String m_value;
 

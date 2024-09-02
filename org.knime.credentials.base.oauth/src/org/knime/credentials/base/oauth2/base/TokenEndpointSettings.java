@@ -97,7 +97,7 @@ public class TokenEndpointSettings implements DefaultNodeSettings, WidgetGroup {
     /**
      * How to provide app ID and secret to the token endpoint.
      */
-    @Widget(title = "Client/App authentication mechanism", //
+    @Widget(title = "Client/App authentication method", //
             description = """
                     How to transfer Client/App ID and secret to the service endpoints. HTTP Basic Auth is the
                     most common mechanism, but some services expect these values to be part of the form-encoded

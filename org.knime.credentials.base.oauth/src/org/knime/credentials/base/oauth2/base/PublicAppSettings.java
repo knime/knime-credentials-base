@@ -74,7 +74,7 @@ public class PublicAppSettings implements WidgetGroup, PersistableSettings {
     /**
      * Field for the app ID.
      */
-    @Widget(title = "Client/App ID", description = "The client/application ID. In some "
+    @Widget(title = "ID", description = "The client/application ID. In some "
             + "services this is called API key.")
     public String m_appId;
 

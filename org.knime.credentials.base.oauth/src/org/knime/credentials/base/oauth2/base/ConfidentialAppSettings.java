@@ -73,7 +73,7 @@ public class ConfidentialAppSettings implements CredentialsSettings {
     /**
      * The name of the Credentials flow variable.
      */
-    @Widget(title = "Client/App ID and secret (flow variable)", //
+    @Widget(title = "ID and Secret (flow variable)", //
             description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
     @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
     public String m_flowVariable;
