@@ -69,6 +69,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.pkce.PKCEService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -86,7 +87,7 @@ public class AuthCodeFlow extends FlowBase {
     private String m_state;
     private CompletableFuture<String> m_authCodeFuture;
     private HttpServer m_server;
-
+    private final boolean m_usePKCE;
 
     /**
      * Creates a new instance.
@@ -95,10 +96,13 @@ public class AuthCodeFlow extends FlowBase {
      *            The {@link OAuth20Service} instance to use.
      * @param redirectUri
      *            The redirect URL.
+     * @param usePKCE
+     *            whether to use PKCE to secure the interactive login.
      */
-    public AuthCodeFlow(final OAuth20Service service, final URI redirectUri) {
+    public AuthCodeFlow(final OAuth20Service service, final URI redirectUri, final boolean usePKCE) {
         super(service);
         m_redirectUri = redirectUri;
+        m_usePKCE = usePKCE;
     }
 
     /**
@@ -116,10 +120,15 @@ public class AuthCodeFlow extends FlowBase {
     @Override
     public OAuth2AccessToken login(final String scopes) throws Exception {
         // state parameter that associates authorization request with redirect response
+        final var pkce = PKCEService.defaultInstance().generatePKCE();
         m_state = UUID.randomUUID().toString().replace("-", "");
 
         var urlBuilder = getService().createAuthorizationUrlBuilder()//
                 .state(m_state);
+
+        if (m_usePKCE) {
+            urlBuilder = urlBuilder.pkce(pkce);
+        }
 
         if (!StringUtils.isBlank(scopes)) {
             urlBuilder = urlBuilder.scope(scopes);
@@ -144,7 +153,10 @@ public class AuthCodeFlow extends FlowBase {
         }
 
         try {
-            return getService().getAccessToken(AccessTokenRequestParams.create(authCode).scope(scopes));
+            return getService().getAccessToken(
+                    AccessTokenRequestParams.create(authCode) //
+                            .pkceCodeVerifier(pkce.getCodeVerifier()) //
+                            .scope(scopes));
         } catch (OAuth2AccessTokenErrorResponse e) {
             throw wrapAccessTokenErrorResponse(e);
         }

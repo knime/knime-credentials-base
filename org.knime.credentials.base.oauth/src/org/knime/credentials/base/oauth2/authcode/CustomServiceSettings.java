@@ -52,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
@@ -73,6 +74,18 @@ class CustomServiceSettings extends TokenEndpointSettings {
     @Widget(title = "Authorization endpoint URL", description = "The authorization endpoint URL of the OAuth service.")
     @Layout(ServiceSection.Custom.Top.class)
     String m_authorizationUrl;
+
+    /**
+     * Boolean to use PKCE when service type is custom.
+     */
+    @Widget(title = "Use PKCE", description = """
+            Enables Proof Key for Code Exchange (PKCE), to improve security of the interactive login.
+            """, //
+            advanced = true)
+    @Layout(ServiceSection.Custom.Bottom.class)
+    @Effect(predicate = IsStandardService.class, type = EffectType.HIDE)
+    @Persist(optional = true)
+    boolean m_usePKCE;
 
     @Override
     public void validate() throws InvalidSettingsException {
