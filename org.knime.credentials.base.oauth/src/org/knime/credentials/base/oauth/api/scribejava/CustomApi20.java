@@ -76,6 +76,7 @@ public class CustomApi20 extends DefaultApi20 {
     private final String m_authorizationUrl;
     private final Verb m_requestMethod;
     private final ClientAuthentication m_clientAuthentication;
+    private final boolean m_usePKCE;
 
     /**
      * @param tokenUrl
@@ -93,6 +94,34 @@ public class CustomApi20 extends DefaultApi20 {
         m_tokenUrl = tokenUrl;
         m_authorizationUrl = authorizationUrl;
         m_requestMethod = requestMethod;
+        m_usePKCE = false;
+        if (clientAuthentication == HttpBasicAuthenticationScheme.instance()) {
+            // fixes a bug in HttpBasicAuthenticationScheme, see
+            // FixedHttpBasicAuthenticationScheme javadoc
+            m_clientAuthentication = FixedHttpBasicAuthenticationScheme.instance();
+        } else {
+            m_clientAuthentication = clientAuthentication;
+        }
+    }
+
+    /**
+     * @param tokenUrl
+     *            Access token endpoint URL.
+     * @param authorizationUrl
+     *            Authorization endpoint URL.
+     * @param requestMethod
+     *            Authorization request method.
+     * @param clientAuthentication
+     *            Client authentication type.
+     * @param usePKCE
+     *            enable PKCE
+     */
+    public CustomApi20(final String tokenUrl, final String authorizationUrl, final Verb requestMethod,
+            final ClientAuthentication clientAuthentication, final boolean usePKCE) {
+        m_tokenUrl = tokenUrl;
+        m_authorizationUrl = authorizationUrl;
+        m_requestMethod = requestMethod;
+        m_usePKCE = usePKCE;
 
         if (clientAuthentication == HttpBasicAuthenticationScheme.instance()) {
             // fixes a bug in HttpBasicAuthenticationScheme, see
@@ -121,6 +150,14 @@ public class CustomApi20 extends DefaultApi20 {
     @Override
     public ClientAuthentication getClientAuthentication() {
         return m_clientAuthentication;
+    }
+
+    /**
+     * @return enable usePKCE
+     *
+     */
+    public boolean isUsePKCE() {
+        return m_usePKCE;
     }
 
     @Override

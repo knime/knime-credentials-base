@@ -74,6 +74,15 @@ class CustomServiceSettings extends TokenEndpointSettings {
     @Layout(ServiceSection.Custom.Top.class)
     String m_authorizationUrl;
 
+    /**
+     * Boolean to use PKCE when service type is custom.
+     */
+    @Widget(title = "Use PKCE", description = "Select to enable Proof Key for Code Exchange.", //
+            advanced = true)
+    @Layout(ServiceSection.Custom.Bottom.class)
+    @Effect(predicate = IsStandardService.class, type = EffectType.HIDE)
+    boolean m_usePKCE;
+
     @Override
     public void validate() throws InvalidSettingsException {
         super.validate();
@@ -88,6 +97,7 @@ class CustomServiceSettings extends TokenEndpointSettings {
         return new CustomApi20(m_tokenUrl, //
                 m_authorizationUrl, //
                 m_tokenRequestMethod.toScribeVerb(), //
-                m_clientAuthMechanism.toScribeClientAuthentication());
+                m_clientAuthMechanism.toScribeClientAuthentication(),
+                m_usePKCE);
     }
 }

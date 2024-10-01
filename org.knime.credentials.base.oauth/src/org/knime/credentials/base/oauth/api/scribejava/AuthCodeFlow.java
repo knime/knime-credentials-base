@@ -69,6 +69,8 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.pkce.PKCE;
+import com.github.scribejava.core.pkce.PKCEService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -116,10 +118,28 @@ public class AuthCodeFlow extends FlowBase {
     @Override
     public OAuth2AccessToken login(final String scopes) throws Exception {
         // state parameter that associates authorization request with redirect response
-        m_state = UUID.randomUUID().toString().replace("-", "");
 
-        var urlBuilder = getService().createAuthorizationUrlBuilder()//
-                .state(m_state);
+        return customLogin(scopes, false);
+    }
+
+    /**
+     * Custom login function to avoid duplication of above method
+     *
+     * @param scopes
+     *            The scopes to request for the access token. May be null.
+     * @param usePKCE
+     *            enable pkce for code exchange in OAuth code flow.
+     * @return the {@link OAuth2AccessToken} if the login was successful.
+     * @throws Exception
+     *             if the login failed for some reason.
+     */
+    @SuppressWarnings("resource")
+    public OAuth2AccessToken customLogin(final String scopes, final boolean usePKCE) throws Exception { // NOSONAR
+
+        PKCE pkce = PKCEService.defaultInstance().generatePKCE();
+        m_state = UUID.randomUUID().toString().replace("-", "");
+        var urlBuilder = (usePKCE) ? getService().createAuthorizationUrlBuilder() //
+                .pkce(pkce).state(m_state) : getService().createAuthorizationUrlBuilder().state(m_state);
 
         if (!StringUtils.isBlank(scopes)) {
             urlBuilder = urlBuilder.scope(scopes);

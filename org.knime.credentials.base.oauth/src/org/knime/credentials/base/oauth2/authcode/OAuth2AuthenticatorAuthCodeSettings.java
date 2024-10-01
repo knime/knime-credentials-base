@@ -194,8 +194,13 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
             final DefaultNodeSettingsContext context) throws Exception {
 
         try (var service = settings.createService(context.getCredentialsProvider().orElseThrow())) {
-            return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
-                    .login(settings.m_scopes.toScopeString());
+            if (settings.m_customService.m_usePKCE) {
+                return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl)) //
+                        .customLogin(settings.m_scopes.toScopeString(), settings.m_customService.m_usePKCE);
+            } else {
+                return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl)) //
+                        .login(settings.m_scopes.toScopeString());
+            }
         }
     }
 
