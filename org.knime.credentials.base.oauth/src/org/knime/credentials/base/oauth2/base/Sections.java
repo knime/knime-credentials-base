@@ -101,7 +101,7 @@ public class Sections {
     /**
      * The section for OAuth2 application configuration.
      */
-    @Section(title = "Client/Application configuration")
+    @Section(title = "Client/App configuration")
     @After(ServiceSection.class)
     public interface AppSection {
         /**
