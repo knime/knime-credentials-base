@@ -1,6 +1,6 @@
 # ![Image](https://www.knime.com/files/knime_logo_github_40x40_4layers.png) KNIME® basic credentials ports and nodes
 
-This repository contains TODO
+This repository is maintained by the [KNIME Team Quokkas](mailto:scrum-bd-esi@knime.com).
 
 
 ## Development Notes
