@@ -108,6 +108,13 @@ public final class PortViewFactories {
     }
 
     private static String createHtmlContent(final CredentialPortObject portObject) {
+        final var content = portObject.getCredential(Credential.class) //
+                .map(PortViewFactories::renderPortViewData) //
+                .orElse("Nothing to display.");
+        return createHtmlPage(content);
+    }
+
+    private static String createHtmlPage(final String content) {
         final var sb = new StringBuilder();
         sb.append("<html><head><style>\n");
         try (var in = PortViewFactories.class.getClassLoader().getResourceAsStream("table.css")) {
@@ -115,12 +122,7 @@ public final class PortViewFactories {
         } catch (IOException ex) { // NOSONAR ignore, should always work
         }
         sb.append("</style></head><body>\n");
-
-        final var credentialHtml = portObject.getCredential(Credential.class)//
-                .map(PortViewFactories::renderPortViewData)//
-                .orElse("Nothing to display.");
-        sb.append(credentialHtml);
-
+        sb.append(content);
         sb.append("</body></html>\n");
         return sb.toString();
     }
@@ -165,10 +167,10 @@ public final class PortViewFactories {
         return new PortView() {
             @Override
             public Page getPage() {
-                final var html = pos.getCredentialType()//
+                final var content = pos.getCredentialType()//
                         .map(type -> String.format("Credential (%s)", type.getName()))//
                         .orElse("Credential");
-                return Page.builder(() -> html, "index.html").build();
+                return Page.builder(() -> createHtmlPage(content), "index.html").build();
             }
 
             @SuppressWarnings("unchecked")
