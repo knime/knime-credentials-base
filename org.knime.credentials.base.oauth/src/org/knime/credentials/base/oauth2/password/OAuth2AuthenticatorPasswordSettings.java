@@ -48,15 +48,23 @@
  */
 package org.knime.credentials.base.oauth2.password;
 
+import java.util.List;
+
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.configmapping.ConfigsDeprecation;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Before;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.DefaultPersistorWithDeprecations;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
-import org.knime.credentials.base.node.UsernamePasswordSettings;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
@@ -95,7 +103,31 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
     ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
 
     @Layout(UsernamePasswordSection.class)
-    UsernamePasswordSettings m_usernamePassword = new UsernamePasswordSettings();
+    @Persist(customPersistor = LegacyCredentialsPersistor.class)
+    @Widget(title = "Username/Password (flow variable)", //
+            description = "Specifies the username and password to use.")
+    LegacyCredentials m_usernamePasswordV2 = new LegacyCredentials(new Credentials());
+
+    static final class LegacyCredentialsPersistor implements DefaultPersistorWithDeprecations<LegacyCredentials> {
+
+        private static final String LEGACY_KEY = "usernamePassword";
+        private static final String LEGACY_SUB_KEY = "flowVariable";
+
+        static LegacyCredentials loadFromLegacy(final NodeSettingsRO settings) throws InvalidSettingsException {
+            final var flowVariableName = settings.getNodeSettings(LEGACY_KEY).getString(LEGACY_SUB_KEY);
+            if (flowVariableName == null) {
+                return new LegacyCredentials(new Credentials());
+            }
+            return new LegacyCredentials(flowVariableName);
+        }
+
+        @Override
+        public List<ConfigsDeprecation<LegacyCredentials>> getConfigsDeprecations() {
+            return List.of(ConfigsDeprecation.builder(LegacyCredentialsPersistor::loadFromLegacy)
+                    .withDeprecatedConfigPath(LEGACY_KEY, LEGACY_SUB_KEY).build());
+        }
+
+    }
 
     ScopeSettings m_scopes = new ScopeSettings();
 
