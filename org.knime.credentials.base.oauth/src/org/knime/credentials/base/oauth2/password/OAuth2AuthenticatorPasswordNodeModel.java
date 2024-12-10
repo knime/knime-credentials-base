@@ -66,8 +66,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-class OAuth2AuthenticatorPasswordNodeModel
-        extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorPasswordSettings> {
+class OAuth2AuthenticatorPasswordNodeModel extends OAuth2AuthenticatorNodeModel<OAuth2AuthenticatorPasswordSettings> {
 
     /**
      * @param configuration
@@ -89,7 +88,7 @@ class OAuth2AuthenticatorPasswordNodeModel
             settings.m_publicApp.validate();
         }
 
-        settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
+        // settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
         settings.m_scopes.validate();
     }
 
@@ -102,16 +101,16 @@ class OAuth2AuthenticatorPasswordNodeModel
         if (settings.m_appType == AppType.CONFIDENTIAL) {
             settings.m_confidentialApp.validateOnExecute(getCredentialsProvider());
         }
-        settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
+        // settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
     }
 
     @Override
     protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorPasswordSettings settings,
             final OAuth20Service service) throws Exception {
 
+        final var credentials = settings.m_usernamePasswordV2.toCredentials(getCredentialsProvider());
         return new PasswordFlow(service, //
-                settings.m_usernamePassword.login(getCredentialsProvider()), //
-                settings.m_usernamePassword.secret(getCredentialsProvider()))//
-                        .login(settings.m_scopes.toScopeString());
+                credentials.getUsername(), //
+                credentials.getPassword()).login(settings.m_scopes.toScopeString());
     }
 }
