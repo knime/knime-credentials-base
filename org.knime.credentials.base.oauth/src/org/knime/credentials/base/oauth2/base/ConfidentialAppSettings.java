@@ -48,11 +48,20 @@
  */
 package org.knime.credentials.base.oauth2.base;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.configmapping.ConfigMigration;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migration;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsMigration;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.credentials.CredentialsWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.node.CredentialsSettings;
@@ -70,19 +79,30 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 @Layout(AppSection.Confidential.class)
 public class ConfidentialAppSettings implements CredentialsSettings {
 
-    /**
-     * The name of the Credentials flow variable.
-     */
-    @Widget(title = "ID and Secret (flow variable)", //
-            description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
-    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
-    public String m_flowVariable;
+    @Migration(LegacyCredentialsMigration.class)
+    @Widget(title = "ID and Secret", //
+            description = "The client/app ID and secret to use.")
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret") // NOSONAR: no PASSWORD here
+    LegacyCredentials m_confidentialAppV2 = new LegacyCredentials(new Credentials());
 
-    @Override
-    public String flowVariableName() {
-        return m_flowVariable;
+    static final class LegacyCredentialsMigration
+            implements NodeSettingsMigration<LegacyCredentials> {
+        private static final String FLOW_VARIABLE_KEY = "flowVariable";
+
+        static LegacyCredentials loadFromLegacy(final NodeSettingsRO settings) throws InvalidSettingsException {
+            final var flowVariableName = settings.getString(FLOW_VARIABLE_KEY);
+            if (flowVariableName == null) {
+                return new LegacyCredentials(new Credentials());
+            }
+            return new LegacyCredentials(flowVariableName);
+        }
+
+        @Override
+        public List<ConfigMigration<LegacyCredentials>> getConfigMigrations() {
+            return List.of(ConfigMigration.builder(LegacyCredentialsMigration::loadFromLegacy)
+                    .withDeprecatedConfigPath(FLOW_VARIABLE_KEY).build());
+        }
     }
-
     /**
      * If a flow variable has been specified, this method validates that a username
      * and password are present in the flow variable. This method should be used
@@ -95,7 +115,6 @@ public class ConfidentialAppSettings implements CredentialsSettings {
      *             when username or password was not present in the flow variable.
      */
     public void validateOnConfigure(final CredentialsProvider credsProvider) throws InvalidSettingsException {
-        validateFlowVariableIsSet();
         if (retrieve(credsProvider).isPresent()) {
             validateLogin(credsProvider, "Client/App ID is required");
             validateSecret(credsProvider, "Client/App secret is required");
@@ -112,8 +131,17 @@ public class ConfidentialAppSettings implements CredentialsSettings {
      *             when flow variable was not present or invalid.
      */
     public void validateOnExecute(final CredentialsProvider credsProvider) throws InvalidSettingsException {
-        validateFlowVariable(credsProvider);
         validateLogin(credsProvider, "Client/App ID is required");
         validateSecret(credsProvider, "Client/App secret is required");
     }
+
+    @Override
+    public Optional<Credentials> retrieve(final CredentialsProvider credsProvider) {
+        try {
+            return Optional.of(m_confidentialAppV2.toCredentials(credsProvider));
+        } catch (IllegalArgumentException e) { // NOSONAR
+            return Optional.empty();
+        }
+    }
+
 }

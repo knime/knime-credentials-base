@@ -59,6 +59,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
 
 /**
@@ -85,11 +86,6 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
     }
 
     /**
-     * @return the name of the flow variable to use
-     */
-    String flowVariableName();
-
-    /**
      * Convenience method to retrieve the contents of a Credentials flow variable.
      *
      * @param credsProvider
@@ -97,13 +93,7 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
      * @return an (optional) {@link ICredentials} if there was a matching
      *         Credentials flow variable, empty otherwise.
      */
-    default Optional<ICredentials> retrieve(final CredentialsProvider credsProvider) {
-        try {
-            return Optional.of(credsProvider.get(flowVariableName()));
-        } catch (IllegalArgumentException e) { // NOSONAR
-            return Optional.empty();
-        }
-    }
+    Optional<Credentials> retrieve(final CredentialsProvider credsProvider);
 
     /**
      * @param credsProvider
@@ -111,7 +101,7 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
      * @return the login (username) from the flow variable.
      */
     default String login(final CredentialsProvider credsProvider) {
-        return retrieve(credsProvider).map(ICredentials::getLogin).orElse("");
+        return retrieve(credsProvider).map(Credentials::getUsername).orElse("");
     }
 
     /**
@@ -120,35 +110,7 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
      * @return the secret (password) from the flow variable.
      */
     default String secret(final CredentialsProvider credsProvider) {
-        return retrieve(credsProvider).map(ICredentials::getPassword).orElse("");
-    }
-
-    /**
-     * Validates that a flow variable was specified and that it exists.
-     *
-     * @param credsProvider
-     *            Provides access to the credential flow variables.
-     * @throws InvalidSettingsException
-     *             when validation failed.
-     */
-    default void validateFlowVariable(final CredentialsProvider credsProvider) throws InvalidSettingsException {
-        validateFlowVariableIsSet();
-        if (retrieve(credsProvider).isEmpty()) {
-            throw new InvalidSettingsException(
-                    String.format("The chosen credentials flow variable '%s' does not exist.", flowVariableName()));
-        }
-    }
-
-    /**
-     * Validates that a flow variable was specified.
-     *
-     * @throws InvalidSettingsException
-     *             when validation failed.
-     */
-    default void validateFlowVariableIsSet() throws InvalidSettingsException {
-        if (StringUtils.isBlank(flowVariableName())) {
-            throw new InvalidSettingsException("Please specify a credentials flow variable.");
-        }
+        return retrieve(credsProvider).map(Credentials::getPassword).orElse("");
     }
 
     /**
@@ -164,10 +126,8 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
      */
     default void validateLogin(final CredentialsProvider credsProvider, final String msg)
             throws InvalidSettingsException {
-
-        validateFlowVariable(credsProvider);
         retrieve(credsProvider)//
-                .map(ICredentials::getLogin)//
+                .map(Credentials::getUsername)//
                 .filter(StringUtils::isNotBlank)//
                 .orElseThrow(() -> new InvalidSettingsException(msg)); // NOSONAR this is not free of side effects
     }
@@ -186,9 +146,8 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
     default void validateSecret(final CredentialsProvider credsProvider, final String msg)
             throws InvalidSettingsException {
 
-        validateFlowVariable(credsProvider);
         retrieve(credsProvider)//
-                .map(ICredentials::getPassword)//
+                .map(Credentials::getPassword)//
                 .filter(StringUtils::isNotBlank)//
                 .orElseThrow(() -> new InvalidSettingsException(msg)); // NOSONAR this is not free of side effects
     }

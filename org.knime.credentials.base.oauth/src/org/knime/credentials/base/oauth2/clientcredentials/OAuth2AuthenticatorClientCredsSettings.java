@@ -87,7 +87,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
 
     TokenEndpointSettings m_service = new TokenEndpointSettings();
 
-    ConfidentialAppSettings m_app = new ConfidentialAppSettings();
+    ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
 
     ScopeSettings m_scopes = new ScopeSettings();
 
@@ -122,8 +122,8 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     public OAuth20Service createService(final CredentialsProvider credsProvider) {
         final var api = m_service.createApi();
 
-        var builder = new CustomOAuth2ServiceBuilder(m_app.login(credsProvider))//
-                .apiSecret(m_app.secret(credsProvider));
+        var builder = new CustomOAuth2ServiceBuilder(m_confidentialApp.login(credsProvider))//
+                .apiSecret(m_confidentialApp.secret(credsProvider));
 
         Arrays.stream(m_additionalRequestFields)//
                 .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));

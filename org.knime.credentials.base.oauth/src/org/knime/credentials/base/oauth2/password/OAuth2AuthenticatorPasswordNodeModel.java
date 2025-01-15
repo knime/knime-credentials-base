@@ -88,7 +88,7 @@ class OAuth2AuthenticatorPasswordNodeModel extends OAuth2AuthenticatorNodeModel<
             settings.m_publicApp.validate();
         }
 
-        // settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
+        settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
         settings.m_scopes.validate();
     }
 
@@ -101,16 +101,16 @@ class OAuth2AuthenticatorPasswordNodeModel extends OAuth2AuthenticatorNodeModel<
         if (settings.m_appType == AppType.CONFIDENTIAL) {
             settings.m_confidentialApp.validateOnExecute(getCredentialsProvider());
         }
-        // settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
+        settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
     }
 
     @Override
     protected OAuth2AccessToken fetchOAuth2AccessToken(final OAuth2AuthenticatorPasswordSettings settings,
             final OAuth20Service service) throws Exception {
 
-        final var credentials = settings.m_usernamePasswordV2.toCredentials(getCredentialsProvider());
         return new PasswordFlow(service, //
-                credentials.getUsername(), //
-                credentials.getPassword()).login(settings.m_scopes.toScopeString());
+                settings.m_usernamePassword.login(getCredentialsProvider()), //
+                settings.m_usernamePassword.secret(getCredentialsProvider()))//
+                        .login(settings.m_scopes.toScopeString());
     }
 }

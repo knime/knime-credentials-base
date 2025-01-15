@@ -81,7 +81,7 @@ class OAuth2AuthenticatorClientCredsNodeModel
             final OAuth2AuthenticatorClientCredsSettings settings) throws InvalidSettingsException {
 
         settings.m_service.validate();
-        settings.m_app.validateOnConfigure(getCredentialsProvider());
+        settings.m_confidentialApp.validateOnConfigure(getCredentialsProvider());
         settings.m_scopes.validate();
 
         if (settings.m_additionalRequestFields != null) {
@@ -97,7 +97,7 @@ class OAuth2AuthenticatorClientCredsNodeModel
 
         // additional validation step to ensure that credentials flow variable is
         // present (this was not done during configure())
-        settings.m_app.validateOnExecute(getCredentialsProvider());
+        settings.m_confidentialApp.validateOnExecute(getCredentialsProvider());
     }
 
     @Override
