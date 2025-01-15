@@ -83,12 +83,12 @@ class OAuth2AuthenticatorPasswordNodeModel extends OAuth2AuthenticatorNodeModel<
         settings.m_service.validate();
 
         if (settings.m_appType == AppType.CONFIDENTIAL) {
-            settings.m_confidentialApp.validateOnConfigure(getCredentialsProvider());
+            settings.validateClientIdAndSecret(getCredentialsProvider());
         } else {
             settings.m_publicApp.validate();
         }
 
-        // settings.m_usernamePassword.validateOnConfigure(getCredentialsProvider());
+        settings.validateUsernameAndPassword(getCredentialsProvider());
         settings.m_scopes.validate();
     }
 
@@ -99,9 +99,9 @@ class OAuth2AuthenticatorPasswordNodeModel extends OAuth2AuthenticatorNodeModel<
         // additional validation steps to ensure that credentials flow variables are
         // present (this was not done during configure())
         if (settings.m_appType == AppType.CONFIDENTIAL) {
-            settings.m_confidentialApp.validateOnExecute(getCredentialsProvider());
+            settings.validateClientIdAndSecret(getCredentialsProvider());
         }
-        // settings.m_usernamePassword.validateOnExecute(getCredentialsProvider());
+        settings.validateUsernameAndPassword(getCredentialsProvider());
     }
 
     @Override

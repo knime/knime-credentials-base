@@ -50,8 +50,10 @@ package org.knime.credentials.base.oauth2.password;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.configmapping.ConfigsDeprecation;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
@@ -64,8 +66,10 @@ import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Creden
 import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.credentials.CredentialsWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
@@ -100,12 +104,38 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
 
     PublicAppSettings m_publicApp = new PublicAppSettings();
 
-    ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
+    @Effect(predicate = IsPublicApp.class, type = EffectType.HIDE)
+    @Layout(AppSection.Confidential.class)
+    @Persist(customPersistor = ConfidentialLegacyCredentialsPersistor.class)
+    @Widget(title = "ID and Secret", //
+            description = "The client/app ID and secret to use.")
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret") // NOSONAR: no PASSWORD here
+    LegacyCredentials m_confidentialApp = new LegacyCredentials(new Credentials());
+
+    static final class ConfidentialLegacyCredentialsPersistor
+            implements DefaultPersistorWithDeprecations<LegacyCredentials> {
+        private static final String LEGACY_KEY = "confidentialApp";
+        private static final String LEGACY_SUB_KEY = "flowVariable";
+
+        static LegacyCredentials loadFromLegacy(final NodeSettingsRO settings) throws InvalidSettingsException {
+            final var flowVariableName = settings.getNodeSettings(LEGACY_KEY).getString(LEGACY_SUB_KEY);
+            if (flowVariableName == null) {
+                return new LegacyCredentials(new Credentials());
+            }
+            return new LegacyCredentials(flowVariableName);
+        }
+
+        @Override
+        public List<ConfigsDeprecation<LegacyCredentials>> getConfigsDeprecations() {
+            return List.of(ConfigsDeprecation.builder(ConfidentialLegacyCredentialsPersistor::loadFromLegacy)
+                    .withDeprecatedConfigPath(LEGACY_KEY, LEGACY_SUB_KEY).build());
+        }
+    }
 
     @Layout(UsernamePasswordSection.class)
     @Persist(customPersistor = LegacyCredentialsPersistor.class)
-    @Widget(title = "Username/Password (flow variable)", //
-            description = "Specifies the username and password to use.")
+    @Widget(title = "Username/Password", //
+            description = "The username and password to use.")
     LegacyCredentials m_usernamePasswordV2 = new LegacyCredentials(new Credentials());
 
     static final class LegacyCredentialsPersistor implements DefaultPersistorWithDeprecations<LegacyCredentials> {
@@ -129,6 +159,24 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
 
     }
 
+    void validateClientIdAndSecret(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_confidentialApp.toCredentials(credentialsProvider).getUsername()),
+                "Client/App ID is required");
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_confidentialApp.toCredentials(credentialsProvider).getPassword()),
+                "Client/App secret is required");
+    }
+
+    void validateUsernameAndPassword(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_usernamePasswordV2.toCredentials(credentialsProvider).getUsername()),
+                "Username is required");
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_usernamePasswordV2.toCredentials(credentialsProvider).getPassword()),
+                "Password is required");
+    }
+
     ScopeSettings m_scopes = new ScopeSettings();
 
     @Override
@@ -138,8 +186,8 @@ final class OAuth2AuthenticatorPasswordSettings implements OAuth2AuthenticatorSe
         if (m_appType == AppType.PUBLIC) {
             return new ServiceBuilder(m_publicApp.m_appId).build(api);
         } else {
-            return new ServiceBuilder(m_confidentialApp.login(credsProvider))//
-                    .apiSecret(m_confidentialApp.secret(credsProvider))//
+            return new ServiceBuilder(m_confidentialApp.toCredentials(credsProvider).getUsername()) //
+                    .apiSecret(m_confidentialApp.toCredentials(credsProvider).getPassword())//
                     .build(api);
         }
     }

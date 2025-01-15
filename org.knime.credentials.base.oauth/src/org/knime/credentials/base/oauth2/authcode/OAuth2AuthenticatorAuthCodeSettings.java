@@ -49,17 +49,26 @@
 package org.knime.credentials.base.oauth2.authcode;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.configmapping.ConfigsDeprecation;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.DefaultPersistorWithDeprecations;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.credentials.CredentialsWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
@@ -67,7 +76,6 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueRefere
 import org.knime.credentials.base.GenericTokenHolder;
 import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.PublicAppSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
@@ -114,7 +122,32 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
     PublicAppSettings m_publicApp = new PublicAppSettings();
 
-    ConfidentialAppSettings m_confidentialApp = new ConfidentialAppSettings();
+    @Effect(predicate = IsPublicApp.class, type = EffectType.HIDE)
+    @Layout(AppSection.Confidential.class)
+    @Persist(customPersistor = LegacyCredentialsPersistor.class)
+    @Widget(title = "ID and Secret", //
+            description = "The client/app ID and secret to use.")
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret") // NOSONAR: no PASSWORD here
+    LegacyCredentials m_confidentialApp = new LegacyCredentials(new Credentials());
+
+    static final class LegacyCredentialsPersistor implements DefaultPersistorWithDeprecations<LegacyCredentials> {
+        private static final String LEGACY_KEY = "confidentialApp";
+        private static final String LEGACY_SUB_KEY = "flowVariable";
+
+        static LegacyCredentials loadFromLegacy(final NodeSettingsRO settings) throws InvalidSettingsException {
+            final var flowVariableName = settings.getNodeSettings(LEGACY_KEY).getString(LEGACY_SUB_KEY);
+            if (flowVariableName == null) {
+                return new LegacyCredentials(new Credentials());
+            }
+            return new LegacyCredentials(flowVariableName);
+        }
+
+        @Override
+        public List<ConfigsDeprecation<LegacyCredentials>> getConfigsDeprecations() {
+            return List.of(ConfigsDeprecation.builder(LegacyCredentialsPersistor::loadFromLegacy)
+                    .withDeprecatedConfigPath(LEGACY_KEY, LEGACY_SUB_KEY).build());
+        }
+    }
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
             The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX
@@ -150,7 +183,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
                 final DefaultNodeSettingsContext context) throws WidgetHandlerException {
             try {
-                settings.validate(context.getCredentialsProvider().orElseThrow());
+            	settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
                 throw new WidgetHandlerException(e.getMessage());
             }
@@ -214,13 +247,22 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         if (m_appType == AppType.PUBLIC) {
             builder = new ServiceBuilder(m_publicApp.m_appId);
         } else {
-            builder = new ServiceBuilder(m_confidentialApp.login(credsProvider))//
-                    .apiSecret(m_confidentialApp.secret(credsProvider));
+            builder = new ServiceBuilder(m_confidentialApp.toCredentials(credsProvider).getUsername())//
+                    .apiSecret(m_confidentialApp.toCredentials(credsProvider).getPassword());
         }
 
         builder.callback(m_redirectUrl);
 
         return builder.build(api);
+    }
+
+    void validateClientIdAndSecret(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_confidentialApp.toCredentials(credentialsProvider).getUsername()),
+                "Client/App ID is required");
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_confidentialApp.toCredentials(credentialsProvider).getPassword()),
+                "Client/App secret is required");
     }
 
     void validate(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
@@ -231,7 +273,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
         }
 
         if (m_appType == AppType.CONFIDENTIAL) {
-            m_confidentialApp.validateOnExecute(credentialsProvider);
+            validateClientIdAndSecret(credentialsProvider);
         } else {
             m_publicApp.validate();
         }

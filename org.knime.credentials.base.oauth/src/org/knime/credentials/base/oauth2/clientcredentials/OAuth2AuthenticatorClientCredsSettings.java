@@ -49,21 +49,30 @@
 package org.knime.credentials.base.oauth2.clientcredentials;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.configmapping.ConfigsDeprecation;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.DefaultPersistorWithDeprecations;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.credentials.CredentialsWidget;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
-import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
+import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
@@ -87,7 +96,31 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
 
     TokenEndpointSettings m_service = new TokenEndpointSettings();
 
-    ConfidentialAppSettings m_app = new ConfidentialAppSettings();
+    @Layout(AppSection.Confidential.class)
+    @Persist(customPersistor = LegacyCredentialsPersistor.class)
+    @Widget(title = "ID and Secret", //
+            description = "The client/app ID and secret to use.")
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret") // NOSONAR: no PASSWORD here
+    LegacyCredentials m_app = new LegacyCredentials(new Credentials());
+
+    static final class LegacyCredentialsPersistor implements DefaultPersistorWithDeprecations<LegacyCredentials> {
+        private static final String LEGACY_KEY = "app";
+        private static final String LEGACY_SUB_KEY = "flowVariable";
+
+        static LegacyCredentials loadFromLegacy(final NodeSettingsRO settings) throws InvalidSettingsException {
+            final var flowVariableName = settings.getNodeSettings(LEGACY_KEY).getString(LEGACY_SUB_KEY);
+            if (flowVariableName == null) {
+                return new LegacyCredentials(new Credentials());
+            }
+            return new LegacyCredentials(flowVariableName);
+        }
+
+        @Override
+        public List<ConfigsDeprecation<LegacyCredentials>> getConfigsDeprecations() {
+            return List.of(ConfigsDeprecation.builder(LegacyCredentialsPersistor::loadFromLegacy)
+                    .withDeprecatedConfigPath(LEGACY_KEY, LEGACY_SUB_KEY).build());
+        }
+    }
 
     ScopeSettings m_scopes = new ScopeSettings();
 
@@ -111,6 +144,15 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
         }
     }
 
+    void validateClientIdAndSecret(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_app.toCredentials(credentialsProvider).getUsername()),
+                "Client/App ID is required");
+        CheckUtils.checkSetting(
+                StringUtils.isNotEmpty(m_app.toCredentials(credentialsProvider).getPassword()),
+                "Client/App secret is required");
+    }
+
     @Widget(title = "Additional request fields", //
             description = "Allows to add request body fields (key and value) to the token endpoint request.", //
             advanced = true)
@@ -122,8 +164,8 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     public OAuth20Service createService(final CredentialsProvider credsProvider) {
         final var api = m_service.createApi();
 
-        var builder = new CustomOAuth2ServiceBuilder(m_app.login(credsProvider))//
-                .apiSecret(m_app.secret(credsProvider));
+        var builder = new CustomOAuth2ServiceBuilder(m_app.toCredentials(credsProvider).getUsername())//
+                .apiSecret(m_app.toCredentials(credsProvider).getPassword());
 
         Arrays.stream(m_additionalRequestFields)//
                 .forEach(field -> builder.additionalRequestBodyField(field.m_name, field.m_value));
