@@ -54,7 +54,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.NodeSettingsPersistorWithConfigKey;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
 import org.knime.credentials.base.CredentialCache;
 
 /**
@@ -64,12 +64,23 @@ import org.knime.credentials.base.CredentialCache;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<UUID> {
+public abstract class AbstractTokenCacheKeyPersistor implements NodeSettingsPersistor<UUID> {
+
+    private final String m_configKey;
+
+    /**
+     * @param configKeyPrefix
+     *            the configKey to use for storing the UUID. For backwards
+     *            compatibility reasons, "_Internals" will be appended to that key.
+     */
+    protected AbstractTokenCacheKeyPersistor(final String configKeyPrefix) {
+        m_configKey = configKeyPrefix + "_Internals";
+    }
 
     @Override
     public UUID load(final NodeSettingsRO settings) throws InvalidSettingsException {
-        if (settings.containsKey(getConfigKey())) {
-            var uuidStr = settings.getString(getConfigKey());
+        if (settings.containsKey(m_configKey)) {
+            var uuidStr = settings.getString(m_configKey);
             if (!StringUtils.isBlank(uuidStr)) {
                 final var uuid = UUID.fromString(uuidStr);
                 if (CredentialCache.get(uuid).isPresent()) {
@@ -84,7 +95,12 @@ public class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<U
     @Override
     public void save(final UUID uuid, final NodeSettingsWO settings) {
         if (uuid != null) {
-            settings.addString(getConfigKey(), uuid.toString());
+            settings.addString(m_configKey, uuid.toString());
         }
+    }
+
+    @Override
+    public String[][] getConfigPaths() {
+        return new String[0][0];
     }
 }

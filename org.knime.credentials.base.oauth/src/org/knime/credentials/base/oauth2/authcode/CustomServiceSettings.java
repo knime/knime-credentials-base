@@ -52,7 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migrate;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
@@ -84,7 +84,7 @@ class CustomServiceSettings extends TokenEndpointSettings {
             advanced = true)
     @Layout(ServiceSection.Custom.Bottom.class)
     @Effect(predicate = IsStandardService.class, type = EffectType.HIDE)
-    @Persist(optional = true)
+    @Migrate(loadDefaultIfAbsent = true)
     boolean m_usePKCE;
 
     @Override

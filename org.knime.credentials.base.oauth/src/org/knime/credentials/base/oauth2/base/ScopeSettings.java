@@ -56,9 +56,9 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.NodeSettingsPersistorWithConfigKey;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
@@ -90,7 +90,7 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
     @Widget(title = "Scopes", description = "The list of scopes to request for the access token.")
     @ArrayWidget(addButtonText = "Add scope")
     @Layout(ScopesSection.class)
-    @Persist(customPersistor = ScopeArrayPersistor.class)
+    @Persistor(ScopeArrayPersistor.class)
     Scope[] m_scopes = new Scope[0];
 
     /**
@@ -120,11 +120,13 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
         return String.join(" ", Arrays.stream(m_scopes).map(s -> s.m_scope.trim()).toList());
     }
 
-    private static final class ScopeArrayPersistor extends NodeSettingsPersistorWithConfigKey<Scope[]> {
+    private static final class ScopeArrayPersistor implements NodeSettingsPersistor<Scope[]> {
+
+        static final String CONFIG_KEY = "scopes";
 
         @Override
         public Scope[] load(final NodeSettingsRO settings) throws InvalidSettingsException {
-            return Arrays.stream(settings.getStringArray(getConfigKey()))//
+            return Arrays.stream(settings.getStringArray(CONFIG_KEY))//
                     .map(Scope::new)//
                     .toArray(Scope[]::new);
         }
@@ -132,7 +134,12 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
         @Override
         public void save(final Scope[] obj, final NodeSettingsWO settings) {
             var stringArray = Arrays.stream(obj).map(s -> s.m_scope).toArray(String[]::new);
-            settings.addStringArray(getConfigKey(), stringArray);
+            settings.addStringArray(CONFIG_KEY, stringArray);
+        }
+
+        @Override
+        public String[][] getConfigPaths() {
+            return new String[][] { { CONFIG_KEY } };
         }
     }
 }

@@ -55,7 +55,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
@@ -65,7 +65,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.GenericTokenHolder;
-import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
+import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
@@ -133,9 +133,15 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
                     + "allows to interactively log into the service.")
-    @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
     @Layout(Footer.class)
+    @Persistor(TokenCacheKeyPersistor.class)
     UUID m_tokenCacheKey;
+
+    static final class TokenCacheKeyPersistor extends AbstractTokenCacheKeyPersistor {
+        TokenCacheKeyPersistor() {
+            super("tokenCacheKey");
+        }
+    }
 
     OAuth2AuthenticatorAuthCodeSettings() {
     }
