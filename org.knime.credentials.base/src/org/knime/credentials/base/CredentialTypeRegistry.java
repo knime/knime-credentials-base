@@ -209,6 +209,7 @@ public final class CredentialTypeRegistry {
      * @since 5.2.1
      */
     public static Optional<SecretConsumableParser<?>> getSecretConsumableParser(final String secretType) { // NOSONAR
+        INSTANCE.ensureInitialized();
         return Optional.ofNullable(INSTANCE.m_secretParsers.get(secretType));
     }
 }
