@@ -13,6 +13,7 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.4.0,6.0.0)",
  org.apache.commons.lang3;bundle-version="3.9.0",
  org.apache.commons.commons-io;bundle-version="[2.15.1,3.0.0)"
 Bundle-ActivationPolicy: lazy
+Bundle-Activator: org.knime.credentials.base.CredentialsBasePlugin
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.credentials.base
 Export-Package: org.knime.credentials.base,
