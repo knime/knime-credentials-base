@@ -51,6 +51,7 @@ package org.knime.credentials.base.internal;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -60,6 +61,8 @@ import org.knime.core.webui.data.RpcDataService;
 import org.knime.core.webui.node.port.PortSpecViewFactory;
 import org.knime.core.webui.node.port.PortView;
 import org.knime.core.webui.node.port.PortViewFactory;
+import org.knime.core.webui.node.port.PortViewManager;
+import org.knime.core.webui.node.port.PortViewManager.PortViewDescriptor;
 import org.knime.core.webui.page.Page;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialPortObject;
@@ -73,18 +76,21 @@ import org.knime.credentials.base.CredentialPortObjectSpec;
 @SuppressWarnings("restriction")
 public final class PortViewFactories {
 
-    /**
-     * {@link PortViewFactory} for the credential port object view.
-     */
-    public static final PortViewFactory<CredentialPortObject> PORT_VIEW_FACTORY = PortViewFactories::createPortView;
-
-    /**
-     * {@link PortSpecViewFactory} for the credential port object spec view.
-     */
-    public static final PortSpecViewFactory<CredentialPortObjectSpec> PORT_SPEC_VIEW_FACTORY = //
-            PortViewFactories::createPortSpecView;
-
     private PortViewFactories() {
+    }
+
+    /**
+     * Registers the views with the {@link PortViewManager}.
+     */
+    public static void register() {
+        final var portSpecViewFactory = //
+                (PortSpecViewFactory<CredentialPortObjectSpec>) PortViewFactories::createPortSpecView;
+        final var portViewFactory = (PortViewFactory<CredentialPortObject>) PortViewFactories::createPortView;
+        PortViewManager.registerPortViews(CredentialPortObject.TYPE, //
+                List.of(new PortViewDescriptor("Credential", portViewFactory), //
+                        new PortViewDescriptor("Credential", portSpecViewFactory)), //
+                List.of(0), //
+                List.of(1));
     }
 
     private static PortView createPortView(final CredentialPortObject portObject) {
