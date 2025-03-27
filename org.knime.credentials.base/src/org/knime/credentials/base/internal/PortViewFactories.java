@@ -86,7 +86,10 @@ public final class PortViewFactories {
         final var portSpecViewFactory = //
                 (PortSpecViewFactory<CredentialPortObjectSpec>) PortViewFactories::createPortSpecView;
         final var portViewFactory = (PortViewFactory<CredentialPortObject>) PortViewFactories::createPortView;
-        PortViewManager.registerPortViews(CredentialPortObject.TYPE, //
+        // AP-24150: Accessing `CredentialPortObject.class` does not trigger static
+        // initializers, which is important here because we don't want to load
+        // `PortType`s in the plugin activator.
+        PortViewManager.registerPortViews(CredentialPortObject.class, //
                 List.of(new PortViewDescriptor("Credential", portViewFactory), //
                         new PortViewDescriptor("Credential", portSpecViewFactory)), //
                 List.of(0), //

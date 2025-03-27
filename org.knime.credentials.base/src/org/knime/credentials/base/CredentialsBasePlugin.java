@@ -53,6 +53,9 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 /**
+ * Activator for the plugin, used to register the port view for
+ * {@link CredentialPortObject}.
+ *
  * @author Leonard Wörteler, KNIME GmbH, Konstanz, Germany
  */
 public class CredentialsBasePlugin implements BundleActivator {
