@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.credentials.base"
       label="KNIME Basic Authentication nodes"
-      version="5.4.3.qualifier"
+      version="5.4.4.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 
    <description>
@@ -732,7 +732,7 @@ propagated with or for interoperation with KNIME.
          download-size="0"
          install-size="0"
          version="0.0.0"/>
-         
+
    <plugin
          id="org.knime.credentials.base.oauth"
          download-size="0"
