@@ -51,8 +51,10 @@ package org.knime.credentials.base.oauth2.base;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.singleselection.NoneChoice;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.singleselection.StringOrEnum;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.node.CredentialsSettings;
@@ -75,12 +77,12 @@ public class ConfidentialAppSettings implements CredentialsSettings {
      */
     @Widget(title = "ID and Secret (flow variable)", //
             description = "Specifies the credentials flow variable with the client/app ID and secret to use.")
-    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
-    public String m_flowVariable;
+    @ChoicesProvider(CredentialsFlowVarChoicesProvider.class)
+    public StringOrEnum<NoneChoice> m_flowVariable;
 
     @Override
     public String flowVariableName() {
-        return m_flowVariable;
+        return m_flowVariable.getStringChoice();
     }
 
     /**
