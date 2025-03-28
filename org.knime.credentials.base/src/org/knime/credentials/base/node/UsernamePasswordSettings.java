@@ -50,8 +50,8 @@ package org.knime.credentials.base.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
 
 /**
  * Implementation of {@link CredentialsSettings} to supply the a username and
@@ -67,7 +67,7 @@ public class UsernamePasswordSettings implements CredentialsSettings {
      */
     @Widget(title = "Username/Password (flow variable)", //
             description = "Specifies the credentials flow variable with the username and password to use.")
-    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
+    @ChoicesProvider(CredentialsFlowVarChoicesProvider.class)
     public String m_flowVariable;
 
     @Override

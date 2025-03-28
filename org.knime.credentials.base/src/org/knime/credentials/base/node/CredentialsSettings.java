@@ -48,18 +48,21 @@
  */
 package org.knime.credentials.base.node;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.FlowVariableChoicesProvider;
 
 /**
  * A {@link DefaultNodeSettings} implementation for when the user needs to
@@ -75,12 +78,11 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
     /**
      * A {@link ChoicesProvider} yielding choices for credential flow variables.
      */
-    final class CredentialsFlowVarChoicesProvider implements ChoicesProvider {
+    final class CredentialsFlowVarChoicesProvider implements FlowVariableChoicesProvider {
         @Override
-        public String[] choices(final DefaultNodeSettingsContext context) {
+        public List<FlowVariable> flowVariableChoices(final DefaultNodeSettingsContext context) {
             return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE)//
-                    .keySet()//
-                    .toArray(String[]::new);
+                    .values().stream().toList();
         }
     }
 
