@@ -90,8 +90,8 @@ public final class PortViewFactories {
         // initializers, which is important here because we don't want to load
         // `PortType`s in the plugin activator.
         PortViewManager.registerPortViews(CredentialPortObject.class, //
-                List.of(new PortViewDescriptor("Credential", portViewFactory), //
-                        new PortViewDescriptor("Credential", portSpecViewFactory)), //
+                List.of(new PortViewDescriptor("Credential", portSpecViewFactory), //
+                        new PortViewDescriptor("Credential", portViewFactory)), //
                 List.of(0), //
                 List.of(1));
     }
