@@ -14,7 +14,12 @@
             id="knime.AccessTokenCredential"
             name="Access Token">
       </credentialType>
-
+      <credentialType
+            credentialClass="org.knime.credentials.base.oauth.api.AccessTokenWithScopesCredential"
+            credentialSerializerClass="org.knime.credentials.base.oauth.api.AccessTokenWithScopesCredential$Serializer"
+            id="knime.AccessTokenWithScopeCredential"
+            name="Access Token (dynamic scope of access">
+      </credentialType>
    </extension>
    <extension
          point="org.knime.workbench.repository.nodes">
