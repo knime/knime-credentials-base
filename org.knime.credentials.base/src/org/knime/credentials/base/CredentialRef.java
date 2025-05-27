@@ -157,6 +157,26 @@ public class CredentialRef {
     }
 
     /**
+     * Checks whether the referenced credential can be accessed using the given
+     * accessor interface.
+     *
+     * @param <T>
+     *            The {@link CredentialAccessor} interface to use.
+     * @param accessorClass
+     *            The accessor interface to test for.
+     * @return true, if it can be accessed using the given accessor interface, false
+     *         otherwise.
+     * @throws NoSuchCredentialException
+     *             if the referenced credential is not present (anymore)
+     */
+    public <T extends CredentialAccessor> boolean hasAccessor(final Class<T> accessorClass)
+            throws NoSuchCredentialException {
+
+        final var credential = getCredential(Credential.class).orElseThrow(NoSuchCredentialException::new);
+        return accessorClass.isAssignableFrom(credential.getClass());
+    }
+
+    /**
      * @return true if the referenced {@link Credential} can be retrieved, false
      *         otherwise.
      */

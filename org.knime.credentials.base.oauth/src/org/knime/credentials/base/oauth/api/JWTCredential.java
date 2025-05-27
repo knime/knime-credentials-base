@@ -283,13 +283,9 @@ public class JWTCredential implements Credential, AccessTokenAccessor, HttpAutho
                 { "Is refreshable", Boolean.toString(m_tokenRefresher != null) }, //
         }));
 
-        try {
-            sections.add(new Section("Access token claims", describe(getJWTAccessToken())));
-            if (getIdToken().isPresent()) {
-                sections.add(new Section("ID token claims", describe(getIdToken().orElseThrow())));
-            }
-        } catch (IOException ex) {// NOSONAR error message is attached to description
-            sections.add(new Section("Error", new String[][] { { "message", ex.getMessage() } }));
+        sections.add(new Section("Access token claims", describe(m_accessToken)));
+        if (getIdToken().isPresent()) {
+            sections.add(new Section("ID token claims", describe(getIdToken().orElseThrow())));
         }
         return new CredentialPortViewData(sections);
     }

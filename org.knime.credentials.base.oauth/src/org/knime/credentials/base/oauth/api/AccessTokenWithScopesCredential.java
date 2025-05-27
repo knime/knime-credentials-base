@@ -50,6 +50,8 @@ package org.knime.credentials.base.oauth.api;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -132,20 +134,22 @@ public class AccessTokenWithScopesCredential implements Credential, AccessTokenW
         final var sections = new LinkedList<CredentialPortViewData.Section>();
 
         final var cachedScopes = new LinkedList<String[]>();
-        cachedScopes.add(new String[] {"Scopes of cached access tokens"});
+        cachedScopes.add(new String[] { "Access token scopes", "Expires after" });
 
         synchronized(this) {
             cachedScopes.addAll(m_cachedTokens.keySet()//
                     .stream()//
-                    .map(Set::toString)//
-                    .sorted()//
-                    .map(s -> new String[] {s})//
+                    .map(s -> new String[] { //
+                            s.toString(), //
+                            m_cachedTokens.get(s).getExpiresAfter().map(//
+                                    i -> i.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME))
+                                    .orElse("n/a") })//
                     .toList());
         }
 
         sections.add(
                 new CredentialPortViewData.Section(//
-                        "Credential to dynamically fetch and cache an OAuth2 access token", //
+                        "Cached OAuth2 access tokens", //
                         cachedScopes.toArray(String[][]::new)));
 
         return new CredentialPortViewData(sections);
