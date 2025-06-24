@@ -58,6 +58,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
@@ -80,7 +81,8 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     /**
      * A section for (optional) additional request fields.
      */
-    @Section(title = "Additional request fields", advanced = true)
+    @Section(title = "Additional request fields")
+    @Advanced
     @After(ScopesSection.class)
     public interface AdditionalFieldsSection {
     }
