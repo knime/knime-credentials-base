@@ -60,6 +60,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettin
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget.ElementLayout;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 
@@ -88,7 +89,7 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
     }
 
     @Widget(title = "Scopes", description = "The list of scopes to request for the access token.")
-    @ArrayWidget(addButtonText = "Add scope")
+    @ArrayWidget(elementLayout = ElementLayout.HORIZONTAL_SINGLE_LINE, addButtonText = "Add scope")
     @Layout(ScopesSection.class)
     @Persistor(ScopeArrayPersistor.class)
     Scope[] m_scopes = new Scope[0];

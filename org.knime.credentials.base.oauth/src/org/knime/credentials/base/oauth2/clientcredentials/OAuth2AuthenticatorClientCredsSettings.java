@@ -116,7 +116,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
     @Widget(title = "Additional request fields", //
             description = "Allows to add request body fields (key and value) to the token endpoint request.", //
             advanced = true)
-    @ArrayWidget(addButtonText = "Add request field")
+    @ArrayWidget(elementLayout = ArrayWidget.ElementLayout.HORIZONTAL_SINGLE_LINE, addButtonText = "Add request field")
     @Layout(AdditionalFieldsSection.class)
     AdditionalRequestField[] m_additionalRequestFields = new AdditionalRequestField[0];
 
