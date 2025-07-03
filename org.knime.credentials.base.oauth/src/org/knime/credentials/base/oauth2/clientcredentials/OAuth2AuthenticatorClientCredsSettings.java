@@ -106,7 +106,8 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
         @Layout(NameAndValue.class)
         String m_value;
 
-        void validate() throws InvalidSettingsException {
+        @Override
+        public void validate() throws InvalidSettingsException {
             if (StringUtils.isBlank(m_name) || StringUtils.isBlank(m_value)) {
                 throw new InvalidSettingsException("Please specify name and value for each additional request field");
             }

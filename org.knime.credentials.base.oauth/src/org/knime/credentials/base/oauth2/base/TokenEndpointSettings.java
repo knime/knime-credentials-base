@@ -164,6 +164,7 @@ public class TokenEndpointSettings implements DefaultNodeSettings, WidgetGroup {
      * @throws InvalidSettingsException
      *             when one of the settings was invalid.
      */
+    @Override
     public void validate() throws InvalidSettingsException {
         if (StringUtils.isEmpty(m_tokenUrl)) {
             throw new InvalidSettingsException("Please specify the token endpoint URL to use");
