@@ -100,7 +100,7 @@ public final class PortViewFactories {
         return new PortView() {
             @Override
             public Page getPage() {
-                return Page.builder(() -> createHtmlContent(portObject), "index.html").build();
+                return Page.create().fromString(() -> createHtmlContent(portObject)).relativePath("index.html");
             }
 
             @SuppressWarnings("unchecked")
@@ -179,7 +179,7 @@ public final class PortViewFactories {
                 final var content = pos.getCredentialType()//
                         .map(type -> String.format("Credential (%s)", type.getName()))//
                         .orElse("Credential");
-                return Page.builder(() -> createHtmlPage(content), "index.html").build();
+                return Page.create().fromString(() -> createHtmlPage(content)).relativePath("index.html");
             }
 
             @SuppressWarnings("unchecked")
