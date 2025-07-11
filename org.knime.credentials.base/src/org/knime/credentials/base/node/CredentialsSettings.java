@@ -57,15 +57,15 @@ import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.VariableType.CredentialsType;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.FlowVariableChoicesProvider;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.PersistableSettings;
+import org.knime.node.parameters.layout.WidgetGroup;
+import org.knime.node.parameters.widget.choices.ChoicesProvider;
+import org.knime.node.parameters.widget.choices.variable.FlowVariableChoicesProvider;
 
 /**
- * A {@link DefaultNodeSettings} implementation for when the user needs to
+ * A {@link NodeParameters} implementation for when the user needs to
  * choose a flow variable of type {@link CredentialsType}. For now this is an
  * interface so that the dropdown box can be nicely labeled depending on what
  * the flow variable supplies (username/password, token, ID/Secret, ...).
@@ -80,7 +80,7 @@ public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
      */
     final class CredentialsFlowVarChoicesProvider implements FlowVariableChoicesProvider {
         @Override
-        public List<FlowVariable> flowVariableChoices(final DefaultNodeSettingsContext context) {
+        public List<FlowVariable> flowVariableChoices(final NodeParametersInput context) {
             return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE)//
                     .values().stream().toList();
         }

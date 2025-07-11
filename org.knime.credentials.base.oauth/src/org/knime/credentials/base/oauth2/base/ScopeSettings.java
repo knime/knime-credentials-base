@@ -54,15 +54,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget.ElementLayout;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
+import org.knime.node.parameters.PersistableSettings;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.WidgetGroup;
+import org.knime.node.parameters.persistence.NodeSettingsPersistor;
+import org.knime.node.parameters.persistence.Persistor;
+import org.knime.node.parameters.widget.Widget;
+import org.knime.node.parameters.widget.array.ArrayWidget;
+import org.knime.node.parameters.widget.array.ArrayWidget.ElementLayout;
 
 /**
  * Implementation of {@link WidgetGroup} to specify a list of scopes.

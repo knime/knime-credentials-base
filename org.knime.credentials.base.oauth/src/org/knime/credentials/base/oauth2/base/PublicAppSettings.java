@@ -50,18 +50,18 @@ package org.knime.credentials.base.oauth2.base;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsPublicApp;
 import org.knime.credentials.base.oauth2.base.Sections.AppSection;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.PersistableSettings;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.WidgetGroup;
+import org.knime.node.parameters.widget.Widget;
+import org.knime.node.parameters.widget.updates.Effect;
+import org.knime.node.parameters.widget.updates.Effect.EffectType;
 
 /**
- * Implementation of {@link DefaultNodeSettings} to supply the ID of a public
+ * Implementation of {@link NodeParameters} to supply the ID of a public
  * OAuth2 app.
  *
  * @author Bjoern Lohrmann, KNIME GmbH

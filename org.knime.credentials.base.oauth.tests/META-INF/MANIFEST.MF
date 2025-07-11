@@ -8,6 +8,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-17
 Fragment-Host: org.knime.credentials.base.oauth;bundle-version="[5.5.0,6.0.0)"
 Eclipse-BundleShape: dir
 Automatic-Module-Name: org.knime.credentials.base.oauth.tests
-Require-Bundle: org.knime.core.ui.testing;bundle-version="[5.5.0,6.0.0)",
+Require-Bundle: org.knime.core.ui.testing;bundle-version="[5.6.0,6.0.0)",
  junit-jupiter-api;bundle-version="[5.9.2,6.0.0)"
 Bundle-ClassPath: .
