@@ -8,11 +8,11 @@ Export-Package: org.knime.credentials.base.oauth.api,
  org.knime.credentials.base.oauth.api.scribejava
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Require-Bundle: org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
+Require-Bundle: org.knime.workbench.repository;bundle-version="[5.6.0,6.0.0)",
  org.knime.core;bundle-version="[5.6.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.6.0,6.0.0)",
  org.eclipse.ui.workbench,
- org.knime.credentials.base;bundle-version="[5.5.0,6.0.0)",
+ org.knime.credentials.base;bundle-version="[5.6.0,6.0.0)",
  com.nimbusds.nimbus-jose-jwt;bundle-version="[8.20.0,9.0.0)",
  com.github.scribejava.apis;bundle-version="[8.0.0,9.0.0)",
  com.github.scribejava.core;bundle-version="[8.0.0,9.0.0)",
