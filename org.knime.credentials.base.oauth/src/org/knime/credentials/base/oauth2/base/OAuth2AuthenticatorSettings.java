@@ -50,9 +50,9 @@ package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
+import org.knime.node.parameters.updates.Predicate;
+import org.knime.node.parameters.updates.PredicateProvider;
+import org.knime.node.parameters.updates.Reference;
 
 import com.github.scribejava.core.oauth.OAuth20Service;
 

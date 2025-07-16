@@ -54,8 +54,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
 import org.knime.credentials.base.CredentialCache;
+import org.knime.node.parameters.persistence.NodeSettingsPersistor;
 
 /**
  * The node settings persistor for the {@link UUID} pointing to

@@ -59,10 +59,10 @@ import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.FlowVariableChoicesProvider;
+import org.knime.node.parameters.WidgetGroup;
+import org.knime.node.parameters.persistence.Persistable;
+import org.knime.node.parameters.widget.choices.ChoicesProvider;
+import org.knime.node.parameters.widget.choices.util.FlowVariableChoicesProvider;
 
 /**
  * A {@link DefaultNodeSettings} implementation for when the user needs to
@@ -73,7 +73,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.Fl
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
+public interface CredentialsSettings extends WidgetGroup, Persistable {
 
     /**
      * A {@link ChoicesProvider} yielding choices for credential flow variables.
