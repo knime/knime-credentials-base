@@ -50,7 +50,7 @@ package org.knime.credentials.base.oauth2.authcode;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsStandardService;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
@@ -62,7 +62,7 @@ import org.knime.node.parameters.updates.Effect.EffectType;
 import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
 /**
- * {@link DefaultNodeSettings} that provides an authorization URL field on top
+ * {@link NodeParameters} that provides an authorization URL field on top
  * of what is provided by {@link TokenEndpointSettings}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH

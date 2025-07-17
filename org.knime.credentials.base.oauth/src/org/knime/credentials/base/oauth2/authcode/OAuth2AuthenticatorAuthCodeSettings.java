@@ -68,12 +68,13 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 import org.knime.credentials.base.oauth2.base.Sections.Footer;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
+import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
 import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.persistence.Persistor;
 import org.knime.node.parameters.updates.Effect;
-import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.updates.Effect.EffectType;
+import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
@@ -154,7 +155,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
         @Override
         protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
-                final DefaultNodeSettingsContext context) throws WidgetHandlerException {
+                final NodeParametersInput context) throws WidgetHandlerException {
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
@@ -197,7 +198,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
      *             if the login failed for some reason.
      */
     static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
-            final DefaultNodeSettingsContext context) throws Exception {
+            final NodeParametersInput context) throws Exception {
 
         try (var service = settings.createService(context.getCredentialsProvider().orElseThrow())) {
             return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl), //

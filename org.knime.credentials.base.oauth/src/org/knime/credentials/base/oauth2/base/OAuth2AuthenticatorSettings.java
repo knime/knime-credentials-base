@@ -49,7 +49,7 @@
 package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.updates.Predicate;
 import org.knime.node.parameters.updates.PredicateProvider;
 import org.knime.node.parameters.updates.Reference;
@@ -63,7 +63,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings({ "restriction", "javadoc" })
-public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
+public interface OAuth2AuthenticatorSettings extends NodeParameters {
 
     String CLIENT_TYPE_DESCRIPTION = """
             Whether a public or confidential application flow should be used.

@@ -53,7 +53,7 @@ import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
@@ -93,7 +93,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
 
     ScopeSettings m_scopes = new ScopeSettings();
 
-    static final class AdditionalRequestField implements DefaultNodeSettings {
+    static final class AdditionalRequestField implements NodeParameters {
         @HorizontalLayout
         interface NameAndValue {
         }

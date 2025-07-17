@@ -59,7 +59,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.credentials.base.Credential;
@@ -84,7 +84,7 @@ import org.knime.credentials.base.CredentialType;
  *            The concrete settings class to use.
  */
 @SuppressWarnings("restriction")
-public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> extends WebUINodeModel<T> {
+public abstract class AuthenticatorNodeModel<T extends NodeParameters> extends WebUINodeModel<T> {
 
     private UUID m_credentialCacheKey;
 
@@ -164,7 +164,7 @@ public abstract class AuthenticatorNodeModel<T extends DefaultNodeSettings> exte
 
     /**
      * Default execute() implementation that invokes
-     * {@link #createCredential(PortObject[], ExecutionContext, DefaultNodeSettings)}
+     * {@link #createCredential(PortObject[], ExecutionContext, NodeParameters)}
      * to create a {@link Credential}.
      */
     @Override

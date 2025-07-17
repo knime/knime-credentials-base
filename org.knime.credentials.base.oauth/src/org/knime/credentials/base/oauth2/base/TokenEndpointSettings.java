@@ -50,7 +50,7 @@ package org.knime.credentials.base.oauth2.base;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings.IsStandardService;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
@@ -68,14 +68,14 @@ import com.github.scribejava.core.oauth2.clientauthentication.HttpBasicAuthentic
 import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthenticationScheme;
 
 /**
- * Implementation of {@link DefaultNodeSettings} to specify configuration for an
+ * Implementation of {@link NodeParameters} to specify configuration for an
  * OAuth2 token endpoint.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
 @Effect(predicate = IsStandardService.class, type = EffectType.HIDE)
-public class TokenEndpointSettings implements DefaultNodeSettings, WidgetGroup {
+public class TokenEndpointSettings implements NodeParameters, WidgetGroup {
 
     /**
      * The URL of the token endpoint.
