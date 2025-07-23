@@ -54,16 +54,10 @@ import java.util.UUID;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersInputImpl;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.CancelableActionHandler;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.GenericTokenHolder;
 import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
@@ -75,6 +69,14 @@ import org.knime.credentials.base.oauth2.base.Sections.AppSection;
 import org.knime.credentials.base.oauth2.base.Sections.Footer;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
 import org.knime.credentials.base.oauth2.base.Sections.ServiceSection;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.persistence.Persistor;
+import org.knime.node.parameters.updates.Effect;
+import org.knime.node.parameters.updates.Effect.EffectType;
+import org.knime.node.parameters.updates.ValueReference;
+import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -154,9 +156,9 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
 
         @Override
         protected UUID invoke(final OAuth2AuthenticatorAuthCodeSettings settings,
-                final DefaultNodeSettingsContext context) throws WidgetHandlerException {
+                final NodeParametersInput context) throws WidgetHandlerException {
             try {
-                settings.validate(context.getCredentialsProvider().orElseThrow());
+                settings.validate(((NodeParametersInputImpl) context).getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
                 throw new WidgetHandlerException(e.getMessage());
             }
@@ -197,9 +199,10 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
      *             if the login failed for some reason.
      */
     static OAuth2AccessToken fetchAccessToken(final OAuth2AuthenticatorAuthCodeSettings settings,
-            final DefaultNodeSettingsContext context) throws Exception {
+            final NodeParametersInput context) throws Exception {
 
-        try (var service = settings.createService(context.getCredentialsProvider().orElseThrow())) {
+        try (var service = settings
+                .createService(((NodeParametersInputImpl) context).getCredentialsProvider().orElseThrow())) {
             return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl), //
                     settings.m_customService.m_usePKCE) //
                             .login(settings.m_scopes.toScopeString());

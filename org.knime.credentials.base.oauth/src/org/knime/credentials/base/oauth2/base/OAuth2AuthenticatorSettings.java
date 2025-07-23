@@ -49,10 +49,10 @@
 package org.knime.credentials.base.oauth2.base;
 
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.updates.EffectPredicate;
+import org.knime.node.parameters.updates.EffectPredicateProvider;
+import org.knime.node.parameters.updates.ParameterReference;
 
 import com.github.scribejava.core.oauth.OAuth20Service;
 
@@ -63,7 +63,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings({ "restriction", "javadoc" })
-public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
+public interface OAuth2AuthenticatorSettings extends NodeParameters {
 
     String CLIENT_TYPE_DESCRIPTION = """
             Whether a public or confidential application flow should be used.
@@ -78,18 +78,18 @@ public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
         STANDARD, CUSTOM;
     }
 
-    class AppTypeRef implements Reference<AppType> {
+    class AppTypeRef implements ParameterReference<AppType> {
 
     }
 
-    class ServiceTypeRef implements Reference<ServiceType> {
+    class ServiceTypeRef implements ParameterReference<ServiceType> {
 
     }
 
-    class IsStandardService implements PredicateProvider {
+    class IsStandardService implements EffectPredicateProvider {
 
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             if (i.isMissing(ServiceTypeRef.class)) {
                 return i.never();
             }
@@ -97,10 +97,10 @@ public interface OAuth2AuthenticatorSettings extends DefaultNodeSettings {
         }
     }
 
-    class IsPublicApp implements PredicateProvider {
+    class IsPublicApp implements EffectPredicateProvider {
 
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             if (i.isMissing(AppTypeRef.class)) {
                 return i.never();
             }

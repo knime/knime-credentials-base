@@ -53,19 +53,19 @@ import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.HorizontalLayout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
 import org.knime.credentials.base.oauth2.base.ConfidentialAppSettings;
 import org.knime.credentials.base.oauth2.base.OAuth2AuthenticatorSettings;
 import org.knime.credentials.base.oauth2.base.ScopeSettings;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
+import org.knime.node.parameters.Advanced;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.array.ArrayWidget;
+import org.knime.node.parameters.layout.After;
+import org.knime.node.parameters.layout.HorizontalLayout;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.Section;
 import org.knime.credentials.base.oauth2.base.TokenEndpointSettings;
 
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -93,7 +93,7 @@ final class OAuth2AuthenticatorClientCredsSettings implements OAuth2Authenticato
 
     ScopeSettings m_scopes = new ScopeSettings();
 
-    static final class AdditionalRequestField implements DefaultNodeSettings {
+    static final class AdditionalRequestField implements NodeParameters {
         @HorizontalLayout
         interface NameAndValue {
         }

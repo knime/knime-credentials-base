@@ -48,8 +48,8 @@
  */
 package org.knime.credentials.base.oauth2.base;
 
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.node.parameters.layout.After;
+import org.knime.node.parameters.layout.Section;
 
 /**
  * Specifies Web UI sections for the family of OAuth2 Authenticator nodes. Not

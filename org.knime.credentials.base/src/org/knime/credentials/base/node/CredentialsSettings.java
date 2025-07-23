@@ -57,15 +57,16 @@ import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.VariableType.CredentialsType;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings.DefaultNodeSettingsContext;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.FlowVariableChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersInputImpl;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.WidgetGroup;
+import org.knime.node.parameters.persistence.Persistable;
+import org.knime.node.parameters.widget.choices.ChoicesProvider;
+import org.knime.node.parameters.widget.choices.FlowVariableChoicesProvider;
 
 /**
- * A {@link DefaultNodeSettings} implementation for when the user needs to
+ * A {@link NodeParameters} implementation for when the user needs to
  * choose a flow variable of type {@link CredentialsType}. For now this is an
  * interface so that the dropdown box can be nicely labeled depending on what
  * the flow variable supplies (username/password, token, ID/Secret, ...).
@@ -73,15 +74,15 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.variable.Fl
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public interface CredentialsSettings extends WidgetGroup, PersistableSettings {
+public interface CredentialsSettings extends WidgetGroup, Persistable {
 
     /**
      * A {@link ChoicesProvider} yielding choices for credential flow variables.
      */
     final class CredentialsFlowVarChoicesProvider implements FlowVariableChoicesProvider {
         @Override
-        public List<FlowVariable> flowVariableChoices(final DefaultNodeSettingsContext context) {
-            return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE)//
+        public List<FlowVariable> flowVariableChoices(final NodeParametersInput context) {
+            return ((NodeParametersInputImpl) context).getAvailableInputFlowVariables(CredentialsType.INSTANCE)//
                     .values().stream().toList();
         }
     }

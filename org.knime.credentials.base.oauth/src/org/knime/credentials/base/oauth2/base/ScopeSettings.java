@@ -54,15 +54,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.WidgetGroup;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.PersistableSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ArrayWidget.ElementLayout;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.WidgetGroup;
+import org.knime.node.parameters.array.ArrayWidget;
+import org.knime.node.parameters.array.ArrayWidget.ElementLayout;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.persistence.NodeParametersPersistor;
+import org.knime.node.parameters.persistence.Persistable;
+import org.knime.node.parameters.persistence.Persistor;
 
 /**
  * Implementation of {@link WidgetGroup} to specify a list of scopes.
@@ -70,7 +70,7 @@ import org.knime.credentials.base.oauth2.base.Sections.ScopesSection;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public class ScopeSettings implements WidgetGroup, PersistableSettings {
+public class ScopeSettings implements WidgetGroup, Persistable {
 
     /**
      * Although a scope is just a string, we have to create a custom class,
@@ -121,7 +121,7 @@ public class ScopeSettings implements WidgetGroup, PersistableSettings {
         return String.join(" ", Arrays.stream(m_scopes).map(s -> s.m_scope.trim()).toList());
     }
 
-    private static final class ScopeArrayPersistor implements NodeSettingsPersistor<Scope[]> {
+    private static final class ScopeArrayPersistor implements NodeParametersPersistor<Scope[]> {
 
         static final String CONFIG_KEY = "scopes";
 

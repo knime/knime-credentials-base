@@ -54,8 +54,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.NodeSettingsPersistor;
 import org.knime.credentials.base.CredentialCache;
+import org.knime.node.parameters.persistence.NodeParametersPersistor;
 
 /**
  * The node settings persistor for the {@link UUID} pointing to
@@ -64,7 +64,7 @@ import org.knime.credentials.base.CredentialCache;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public abstract class AbstractTokenCacheKeyPersistor implements NodeSettingsPersistor<UUID> {
+public abstract class AbstractTokenCacheKeyPersistor implements NodeParametersPersistor<UUID> {
 
     private final String m_configKey;
 
