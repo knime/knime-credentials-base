@@ -22,14 +22,14 @@ try {
     workflowTests.runTests(
         dependencies: [
             repositories: [
-		'knime-gateway',
-		'knime-xml',
-		'knime-json',
+                'knime-gateway',
+                'knime-xml',
+                'knime-json',
                 'knime-kerberos',
-		'knime-rest',
-		'knime-js-base',
-		'knime-js-core'
-	    ]
+                'knime-rest',
+                'knime-js-base',
+                'knime-js-core'
+            ]
         ]
     )
 

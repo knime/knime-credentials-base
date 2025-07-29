@@ -1,81 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.knime.maven</groupId>
-		<artifactId>ap.parent</artifactId>
-		<version>5.8.0</version>
-	</parent>
+    <parent>
+        <groupId>org.knime.maven</groupId>
+        <artifactId>ap.parent</artifactId>
+        <version>5.8.0</version>
+    </parent>
 
-	<groupId>org.knime</groupId>
-	<artifactId>knime-credentials-base</artifactId>
-	<version>${revision}${changelist}</version>
-	<packaging>pom</packaging>
+    <groupId>org.knime</groupId>
+    <artifactId>knime-credentials-base</artifactId>
+    <version>${revision}${changelist}</version>
+    <packaging>pom</packaging>
 
-	<properties>
-		<revision>5.6.0</revision>
-		<changelist>-SNAPSHOT</changelist>
-		<feature-branch-extension.branchListProperty>git.branch</feature-branch-extension.branchListProperty>
-		<feature-branch-extension.appendArtifactoryProperties>false</feature-branch-extension.appendArtifactoryProperties>
-                <knime.sonar-env>Sonarcloud</knime.sonar-env>
-                <changelog.baseref>fbfe09f9ad7e6843f8271f53d2c23281ed7c3a17</changelog.baseref>
-	</properties>
+    <properties>
+        <revision>5.6.0</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <feature-branch-extension.branchListProperty>git.branch</feature-branch-extension.branchListProperty>
+        <feature-branch-extension.appendArtifactoryProperties>false</feature-branch-extension.appendArtifactoryProperties>
+        <knime.sonar-env>Sonarcloud</knime.sonar-env>
+        <changelog.baseref>fbfe09f9ad7e6843f8271f53d2c23281ed7c3a17</changelog.baseref>
+    </properties>
 
-	<modules>
-		<module>org.knime.credentials.base</module>
-		<module>org.knime.credentials.base.oauth</module>
-		<module>org.knime.credentials.base.oauth.tests</module>
-		<module>org.knime.features.credentials.base</module>
-		<module>org.knime.update.credentials.base</module>
-	</modules>
+    <modules>
+        <module>org.knime.credentials.base</module>
+        <module>org.knime.credentials.base.oauth</module>
+        <module>org.knime.credentials.base.oauth.tests</module>
+        <module>org.knime.features.credentials.base</module>
+        <module>org.knime.update.credentials.base</module>
+    </modules>
 
-	<!-- List all repositories required for compilation here. The variables are defined in knime-maven-parent/pom.xml. -->
-	<repositories>
-		<repository>
-			<id>p2-knime-workbench</id>
-			<layout>p2</layout>
-			<url>${knime.workbench.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-core</id>
-			<layout>p2</layout>
-			<url>${knime.core.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-core-ui</id>
-			<layout>p2</layout>
-			<url>${knime.core.ui.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-base</id>
-			<layout>p2</layout>
-			<url>${knime.base.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-gateway</id>
-			<layout>p2</layout>
-			<url>${knime.gateway.p2}</url>
-		</repository>
-                <repository>
-                        <id>p2-knime-svg</id>
-                        <layout>p2</layout>
-                        <url>${knime.svg.p2}</url>
-                </repository>
-		<repository>
-			<id>p2-knime-shared</id>
-			<layout>p2</layout>
-			<url>${knime.shared.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-tp</id>
-			<layout>p2</layout>
-			<url>${knime.tp.p2}</url>
-		</repository>
+    <!-- List all repositories required for compilation here. The variables are defined in knime-maven-parent/pom.xml. -->
+    <repositories>
+        <repository>
+            <id>p2-knime-workbench</id>
+            <layout>p2</layout>
+            <url>${knime.workbench.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-core</id>
+            <layout>p2</layout>
+            <url>${knime.core.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-core-ui</id>
+            <layout>p2</layout>
+            <url>${knime.core.ui.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-base</id>
+            <layout>p2</layout>
+            <url>${knime.base.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-gateway</id>
+            <layout>p2</layout>
+            <url>${knime.gateway.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-svg</id>
+            <layout>p2</layout>
+            <url>${knime.svg.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-shared</id>
+            <layout>p2</layout>
+            <url>${knime.shared.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-tp</id>
+            <layout>p2</layout>
+            <url>${knime.tp.p2}</url>
+        </repository>
         <repository>
             <id>p2-knime-filehandling-core</id>
             <layout>p2</layout>
             <url>${knime.filehandling.core.p2}</url>
         </repository>
-	</repositories>
+    </repositories>
 </project><!-- vim: set shiftwidth=4 expandtab smarttab: -->
