@@ -18,6 +18,7 @@
 		<revision>5.6.0</revision>
 		<sonar.sources/>
 		<sonar.tests>src/eclipse</sonar.tests>
+		<tycho.version>4.0.13</tycho.version>
     </properties>
 
     <build>
@@ -26,6 +27,7 @@
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
+				<apache.xmlbeans.version>5.3.0</apache.xmlbeans.version>
 				<configuration>
 					<dependency-resolution>
 						<extraRequirements>
