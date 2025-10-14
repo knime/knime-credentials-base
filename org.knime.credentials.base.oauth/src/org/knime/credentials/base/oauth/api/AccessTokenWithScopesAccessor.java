@@ -72,7 +72,10 @@ public interface AccessTokenWithScopesAccessor extends CredentialAccessor {
      * @return an {@link AccessTokenAccessor} that provides an access token which
      *         provides the given scopes.
      * @throws IOException
-     *             if no access token could be acquired for the given scopes.
+     *             if no access token could be acquired for the given scopes
+     * @throws IdentityProviderException
+     *             if trying to acquire the access token resulted in error
+     *             information being returned by the identity provider
      */
     AccessTokenAccessor getAccessTokenWithScopes(Set<String> scopes) throws IOException;
 }
