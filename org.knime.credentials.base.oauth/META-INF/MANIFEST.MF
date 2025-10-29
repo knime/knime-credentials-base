@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: KNIME OAuth credentials type implementaion.
 Bundle-SymbolicName: org.knime.credentials.base.oauth;singleton:=true
-Bundle-Version: 5.6.0.qualifier
+Bundle-Version: 5.9.0.qualifier
 Export-Package: org.knime.credentials.base.oauth.api,
  org.knime.credentials.base.oauth.api.nodesettings,
  org.knime.credentials.base.oauth.api.scribejava
