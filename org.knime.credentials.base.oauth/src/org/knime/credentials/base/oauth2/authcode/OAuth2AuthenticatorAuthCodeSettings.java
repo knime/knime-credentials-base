@@ -104,7 +104,7 @@ class OAuth2AuthenticatorAuthCodeSettings implements OAuth2AuthenticatorSettings
     @Widget(title = "Service", description = "A standard OAuth service from a predefined list.")
     @Layout(ServiceSection.Standard.class)
     @Effect(predicate = IsStandardService.class, type = EffectType.SHOW)
-    StandardService m_standardService;
+    StandardService m_standardService = StandardService.ASANA20API;
 
     CustomServiceSettings m_customService = new CustomServiceSettings();
 
